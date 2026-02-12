@@ -1,36 +1,26 @@
 package sn.esmt.cartographie.repository;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import sn.esmt.cartographie.model.projet.Projet;
+import sn.esmt.cartographie.model.projet.StatutProjet;
+
 import java.util.List;
 
-public class ProjetRepository {
+@Repository
+public interface ProjetRepository extends JpaRepository<Projet, Long> {
 
-    private EntityManagerFactory emf = Persistence.createEntityManagerFactory("CartographiePU");
+    List<Projet> findByResponsableProjetId(Long userId);
 
-    public void save(Projet projet) {
-        EntityManager em = emf.createEntityManager();
-        em.getTransaction().begin();
-        em.persist(projet);
-        em.getTransaction().commit();
-        em.close();
-    }
+    List<Projet> findByStatutProjet(StatutProjet statut);
 
-    public List<Projet> findAll() {
-        EntityManager em = emf.createEntityManager();
-        List<Projet> projets = em.createQuery("SELECT p FROM Projet p", Projet.class).getResultList();
-        em.close();
-        return projets;
-    }
+    List<Projet> findByDomaineRechercheId(Long domaineId);
 
-    public List<Projet> findByResponsable(Long userId) {
-        EntityManager em = emf.createEntityManager();
-        List<Projet> projets = em.createQuery("SELECT p FROM Projet p WHERE p.responsable_projet.id = :userId", Projet.class)
-                .setParameter("userId", userId)
-                .getResultList();
-        em.close();
-        return projets;
-    }
+    @Query("SELECT p FROM Projet p JOIN p.liste_participants part WHERE part.id = :userId")
+    List<Projet> findByParticipantId(@Param("userId") Long userId);
+
+    @Query("SELECT p FROM Projet p WHERE p.responsable_projet.id = :userId OR :userId IN (SELECT part.id FROM p.liste_participants part)")
+    List<Projet> findByResponsableOrParticipant(@Param("userId") Long userId);
 }
