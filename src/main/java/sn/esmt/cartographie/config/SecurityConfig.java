@@ -1,5 +1,6 @@
 package sn.esmt.cartographie.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,7 +24,8 @@ import java.util.List;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @ConditionalOnProperty(name = "spring.security.oauth2.client.registration.google.client-id", matchIfMissing = false)
+    public SecurityFilterChain filterChainWithOAuth(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -48,6 +50,32 @@ public class SecurityConfig {
                 .defaultSuccessUrl("/auth/oauth2/success", true)
             )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}))
+            .headers(headers -> headers.frameOptions(frame -> frame.disable())); // For H2 console
+
+        return http.build();
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "spring.security.oauth2.client.registration.google.client-id", havingValue = "false", matchIfMissing = true)
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(session -> 
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                // Public endpoints
+                .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register").permitAll()
+                .requestMatchers(HttpMethod.GET, "/health").permitAll()
+                // Protected endpoints
+                .requestMatchers("/projects/**").authenticated()
+                .requestMatchers("/users/**").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers("/statistics/**").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers("/domains/**").authenticated()
+                .anyRequest().authenticated()
+            )
             .headers(headers -> headers.frameOptions(frame -> frame.disable())); // For H2 console
 
         return http.build();
