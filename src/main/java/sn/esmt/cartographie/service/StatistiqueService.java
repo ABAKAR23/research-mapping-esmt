@@ -1,25 +1,85 @@
 package sn.esmt.cartographie.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import sn.esmt.cartographie.dto.StatisticsDTO;
+import sn.esmt.cartographie.model.auth.Utilisateur;
 import sn.esmt.cartographie.model.projet.Projet;
 import sn.esmt.cartographie.repository.ProjetRepository;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Service
 public class StatistiqueService {
 
-    private ProjetRepository projetRepository = new ProjetRepository();
+    @Autowired
+    private ProjetRepository projetRepository;
 
-    // Calculer le budget total de tous les projets
+    public StatisticsDTO getStatistics() {
+        StatisticsDTO stats = new StatisticsDTO();
+        List<Projet> projets = projetRepository.findAll();
+
+        // Nombre total de projets
+        stats.setTotalProjets((long) projets.size());
+
+        // Budget total
+        Double budgetTotal = projets.stream()
+                .filter(p -> p.getBudget_estime() != null)
+                .mapToDouble(Projet::getBudget_estime)
+                .sum();
+        stats.setBudgetTotal(budgetTotal);
+
+        // Projets par statut
+        Map<String, Long> projetsParStatut = projets.stream()
+                .filter(p -> p.getStatut_projet() != null)
+                .collect(Collectors.groupingBy(p -> p.getStatut_projet().toString(), Collectors.counting()));
+        stats.setProjetsParStatut(projetsParStatut);
+
+        // Projets par domaine
+        Map<String, Long> projetsParDomaine = projets.stream()
+                .filter(p -> p.getDomaine_recherche() != null)
+                .collect(Collectors.groupingBy(p -> p.getDomaine_recherche().getNomDomaine(), Collectors.counting()));
+        stats.setProjetsParDomaine(projetsParDomaine);
+
+        // Budget par domaine
+        Map<String, Double> budgetParDomaine = projets.stream()
+                .filter(p -> p.getDomaine_recherche() != null && p.getBudget_estime() != null)
+                .collect(Collectors.groupingBy(
+                        p -> p.getDomaine_recherche().getNomDomaine(),
+                        Collectors.summingDouble(Projet::getBudget_estime)
+                ));
+        stats.setBudgetParDomaine(budgetParDomaine);
+
+        // Projets par participant
+        Map<String, Long> projetsParParticipant = projets.stream()
+                .filter(p -> p.getListe_participants() != null)
+                .flatMap(p -> p.getListe_participants().stream())
+                .collect(Collectors.groupingBy(Utilisateur::getNom, Collectors.counting()));
+        stats.setProjetsParParticipant(projetsParParticipant);
+
+        // Taux moyen d'avancement
+        Double tauxMoyenAvancement = projets.stream()
+                .filter(p -> p.getNiveau_avancement() != null)
+                .mapToInt(Projet::getNiveau_avancement)
+                .average()
+                .orElse(0.0);
+        stats.setTauxMoyenAvancement(tauxMoyenAvancement);
+
+        return stats;
+    }
+
     public Double calculerBudgetTotal() {
         return projetRepository.findAll().stream()
+                .filter(p -> p.getBudget_estime() != null)
                 .mapToDouble(Projet::getBudget_estime)
                 .sum();
     }
 
-    // Compter le nombre de projets par statut (pour le graphique en secteurs)
     public Map<String, Long> compterProjetsParStatut() {
         return projetRepository.findAll().stream()
+                .filter(p -> p.getStatut_projet() != null)
                 .collect(Collectors.groupingBy(p -> p.getStatut_projet().toString(), Collectors.counting()));
     }
 }
