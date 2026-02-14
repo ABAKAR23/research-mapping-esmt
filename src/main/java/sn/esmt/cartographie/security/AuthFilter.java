@@ -7,13 +7,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 
-// On définit ici toutes les pages qui nécessitent d'être connecté
-@WebFilter(urlPatterns = {"/projets", "/dashboard", "/import", "/profil"})
+/**
+ * Filtre de sécurité : Vérifie si l'utilisateur est authentifié avec Google
+ * avant d'accéder aux ressources protégées.
+ */
+@WebFilter(urlPatterns = {"/import.jsp", "/import-csv", "/projets/*"})
 public class AuthFilter implements Filter {
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        // Initialisation si nécessaire
+        // Initialisation du filtre
     }
 
     @Override
@@ -22,23 +25,24 @@ public class AuthFilter implements Filter {
 
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
-        HttpSession session = req.getSession(false); // On récupère la session sans en créer une nouvelle
 
-        // On vérifie si l'utilisateur est passé par la CallbackServlet avec succès
+        // On récupère la session existante sans en créer une nouvelle (false)
+        HttpSession session = req.getSession(false);
+
+        // Vérification de la présence de l'attribut défini dans CallbackServlet
         boolean loggedIn = (session != null && session.getAttribute("is_authenticated") != null);
 
+        // Permettre l'accès si l'utilisateur est connecté
         if (loggedIn) {
-            // L'utilisateur est connecté, on laisse passer la requête vers la Servlet demandée
             chain.doFilter(request, response);
         } else {
-            // L'utilisateur n'est pas connecté, on le redirige vers la page d'accueil (index.jsp)
-            // avec un petit message d'erreur
+            // Sinon, redirection vers la page d'accueil avec un message d'erreur
             res.sendRedirect(req.getContextPath() + "/index.jsp?error=auth_required");
         }
     }
 
     @Override
     public void destroy() {
-        // Nettoyage si nécessaire
+        // Nettoyage des ressources du filtre
     }
 }

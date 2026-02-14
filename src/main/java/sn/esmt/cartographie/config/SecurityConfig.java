@@ -1,99 +1,64 @@
 package sn.esmt.cartographie.config;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     @Bean
-    @ConditionalOnProperty(name = "spring.security.oauth2.client.registration.google.client-id", matchIfMissing = false)
-    public SecurityFilterChain filterChainWithOAuth(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session -> 
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register").permitAll()
-                .requestMatchers(HttpMethod.GET, "/health").permitAll()
-                // OAuth2 endpoints
-                .requestMatchers("/login/**", "/oauth2/**").permitAll()
-                // Protected endpoints
-                .requestMatchers("/projects/**").authenticated()
-                .requestMatchers("/users/**").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers("/statistics/**").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers("/domains/**").authenticated()
-                .anyRequest().authenticated()
-            )
-            .oauth2Login(oauth2 -> oauth2
-                .defaultSuccessUrl("/auth/oauth2/success", true)
-            )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}))
-            .headers(headers -> headers.frameOptions(frame -> frame.disable())); // For H2 console
-
-        return http.build();
-    }
-
-    @Bean
-    @ConditionalOnProperty(name = "spring.security.oauth2.client.registration.google.client-id", havingValue = "false", matchIfMissing = true)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session -> 
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register").permitAll()
-                .requestMatchers(HttpMethod.GET, "/health").permitAll()
-                // Protected endpoints
-                .requestMatchers("/projects/**").authenticated()
-                .requestMatchers("/users/**").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers("/statistics/**").hasAnyRole("ADMIN", "MANAGER")
-                .requestMatchers("/domains/**").authenticated()
-                .anyRequest().authenticated()
-            )
-            .headers(headers -> headers.frameOptions(frame -> frame.disable())); // For H2 console
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .authorizeHttpRequests(authz -> authz
+                        // Pages publiques
+                        .requestMatchers("/", "/login").permitAll()
+                        .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                        // Ressources statiques
+                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        // OAuth2 endpoints
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        // API publiques
+                        .requestMatchers("/api/public/**").permitAll()
+                        // Tout le reste nécessite authentification
+                        .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/dashboard", true)
+                        .failureUrl("/login?error=true")
+                )
+                .logout(logout -> logout
+                        .logoutSuccessUrl("/login")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
+                )
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
         return http.build();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8081", "http://localhost:8080", "http://localhost:3000"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
