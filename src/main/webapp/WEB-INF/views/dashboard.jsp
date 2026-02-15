@@ -1,11 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - ESMT Research Mapping</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -66,7 +66,7 @@
 
         .container {
             padding: 2rem;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -79,40 +79,58 @@
             margin-bottom: 10px;
         }
 
-        .auth-info-box {
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
             background: white;
             padding: 20px;
             border-radius: 8px;
-            margin-bottom: 2rem;
-            border-left: 5px solid #28a745;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
         }
 
-        .auth-info-box h3 {
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #003d82;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
+            height: 400px;
+        }
+
+        .chart-container h3 {
             color: #003d82;
             margin-bottom: 15px;
+            font-size: 18px;
         }
 
-        .auth-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 15px;
-        }
-
-        .detail-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .detail-item .label {
-            font-weight: 600;
-            color: #666;
-        }
-
-        .detail-item .value {
-            color: #333;
+        .chart-wrapper {
+            position: relative;
+            height: 350px;
         }
     </style>
 </head>
@@ -124,41 +142,197 @@
         </div>
         <div class="nav-right">
             <div class="user-info">
-                <span class="username">
-                    <sec:authentication property="principal.attributes['name']" />
-                </span>
+                <span class="username" id="username">Chargement...</span>
             </div>
-            <form action="/logout" method="post" style="display: inline;">
-                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
-                <button type="submit" class="btn-logout">Déconnexion</button>
-            </form>
+            <button class="btn-logout" onclick="handleLogout()">Déconnexion</button>
         </div>
     </nav>
 
     <!-- Main Content -->
     <div class="container">
         <div class="welcome-section">
-            <h2>Bienvenue, <sec:authentication property="principal.attributes['name']" />! 👋</h2>
-            <p>Vous êtes connecté avec OAuth 2.0</p>
+            <h2 id="welcome">Bienvenue! 👋</h2>
+            <p>Tableau de bord des projets de recherche</p>
         </div>
 
-        <div class="auth-info-box">
-            <h3>✅ Statut d'authentification OAuth 2.0</h3>
-            <div class="auth-details">
-                <div class="detail-item">
-                    <span class="label">Statut:</span>
-                    <span class="value">🟢 AUTHENTIFIÉ</span>
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>📊 Total Projets</h3>
+                <div class="stat-value" id="totalProjects">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>✅ Projets Approuvés</h3>
+                <div class="stat-value" id="approvedProjects">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>⏳ En Attente</h3>
+                <div class="stat-value" id="pendingProjects">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>👥 Chercheurs</h3>
+                <div class="stat-value" id="totalResearchers">0</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h3>📈 Projets par Statut</h3>
+                <div class="chart-wrapper">
+                    <canvas id="statusChart"></canvas>
                 </div>
-                <div class="detail-item">
-                    <span class="label">Email:</span>
-                    <span class="value"><sec:authentication property="principal.attributes['email']" /></span>
+            </div>
+            <div class="chart-container">
+                <h3>🎯 Projets par Domaine</h3>
+                <div class="chart-wrapper">
+                    <canvas id="domainChart"></canvas>
                 </div>
-                <div class="detail-item">
-                    <span class="label">ID Utilisateur:</span>
-                    <span class="value"><sec:authentication property="principal.attributes['sub']" /></span>
+            </div>
+            <div class="chart-container">
+                <h3>📅 Projets par Mois</h3>
+                <div class="chart-wrapper">
+                    <canvas id="monthChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>👨‍💼 Top Chercheurs</h3>
+                <div class="chart-wrapper">
+                    <canvas id="researchersChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        // Vérifier l'authentification
+        window.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/research-platform/login.jsp';
+                return;
+            }
+
+            // Charger les données utilisateur
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            document.getElementById('username').textContent = user.name || 'Utilisateur';
+            document.getElementById('welcome').textContent = `Bienvenue, ${user.name}! 👋`;
+
+            // Charger les statistiques
+            loadStatistics();
+        });
+
+        function handleLogout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/research-platform/login.jsp';
+        }
+
+        function loadStatistics() {
+            const token = localStorage.getItem('token');
+
+            fetch('/research-platform/api/statistics/all', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update stat cards
+                document.getElementById('totalProjects').textContent = data.totalProjects || 0;
+                document.getElementById('approvedProjects').textContent = data.approvedProjects || 0;
+                document.getElementById('pendingProjects').textContent = data.pendingProjects || 0;
+                document.getElementById('totalResearchers').textContent = data.totalResearchers || 0;
+
+                // Create charts
+                createStatusChart(data.projectsByStatus || {});
+                createDomainChart(data.projectsByDomain || {});
+                createMonthChart(data.projectsByMonth || {});
+                createResearchersChart(data.topResearchers || []);
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+            });
+        }
+
+        function createStatusChart(data) {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        data: Object.values(data),
+                        backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function createDomainChart(data) {
+            const ctx = document.getElementById('domainChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        label: 'Nombre de projets',
+                        data: Object.values(data),
+                        backgroundColor: '#667eea'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y'
+                }
+            });
+        }
+
+        function createMonthChart(data) {
+            const ctx = document.getElementById('monthChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        label: 'Projets par mois',
+                        data: Object.values(data),
+                        borderColor: '#764ba2',
+                        backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function createResearchersChart(data) {
+            const ctx = document.getElementById('researchersChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(r => r.name),
+                    datasets: [{
+                        label: 'Nombre de projets',
+                        data: data.map(r => r.projectCount),
+                        backgroundColor: '#ffc107'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y'
+                }
+            });
+        }
+    </script>
 </body>
 </html>

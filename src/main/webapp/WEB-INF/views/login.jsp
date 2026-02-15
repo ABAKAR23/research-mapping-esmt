@@ -61,44 +61,115 @@
             font-size: 14px;
         }
 
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+            margin-bottom: 15px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 0.9em;
+            margin-top: 5px;
+            padding: 10px;
+            background: #fadbd8;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .success {
+            color: #27ae60;
+            font-size: 0.9em;
+            margin-top: 5px;
+            padding: 10px;
+            background: #d5f4e6;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: #999;
+        }
+
         .oauth-buttons {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin-bottom: 30px;
+            gap: 10px;
         }
 
-        .btn {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
+        .btn-oauth {
+            padding: 12px;
+            border: 2px solid #ddd;
+            background: white;
+            color: #333;
+            border-radius: 5px;
             cursor: pointer;
             font-weight: 500;
+            transition: all 0.3s;
             text-decoration: none;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
-            transition: all 0.3s ease;
         }
 
-        .btn-google {
-            background: white;
-            color: #333;
-            border: 2px solid #ddd;
+        .btn-oauth:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
         }
 
-        .btn-google:hover {
-            background: #f8f9fa;
-            border-color: #999;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        .link {
+            text-align: center;
+            margin-top: 20px;
         }
 
-        .btn-google img {
-            width: 20px;
-            height: 20px;
+        .link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -112,12 +183,88 @@
         <h2>Connexion</h2>
         <p class="subtitle">Bienvenue! Veuillez vous connecter.</p>
 
+        <div id="error" class="error"></div>
+        <div id="success" class="success"></div>
+
+        <form onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="username">👤 Nom d'utilisateur</label>
+                <input type="text" id="username" name="username" required placeholder="Entrez votre username">
+            </div>
+
+            <div class="form-group">
+                <label for="password">🔐 Mot de passe</label>
+                <input type="password" id="password" name="password" required placeholder="Entrez votre mot de passe">
+            </div>
+
+            <button type="submit">Se Connecter</button>
+        </form>
+
+        <div class="divider">OU</div>
+
         <div class="oauth-buttons">
-            <a href="/oauth2/authorization/google" class="btn btn-google">
-                <img src="https://www.gstatic.com/images/branding/product/1x/googleg_standard_color_92dp.png" alt="Google" />
+            <a href="/research-platform/api/auth/google" class="btn-oauth">
+                <img src="https://www.gstatic.com/images/branding/product/1x/googleg_standard_color_92dp.png" alt="Google" width="20">
                 Se connecter avec Google
             </a>
         </div>
+
+        <div class="link">
+            Pas de compte? <a href="/research-platform/register.jsp">S'inscrire</a>
+        </div>
     </div>
+
+    <script>
+        function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('error');
+            const successDiv = document.getElementById('success');
+
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            fetch('/research-platform/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    successDiv.textContent = '✅ Connexion réussie! Redirection...';
+                    successDiv.style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = '/research-platform/dashboard.jsp';
+                    }, 1500);
+                } else {
+                    errorDiv.textContent = '❌ ' + (data.message || 'Identifiants incorrects');
+                    errorDiv.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                errorDiv.textContent = '❌ Erreur de connexion au serveur';
+                errorDiv.style.display = 'block';
+                console.error('Erreur:', error);
+            });
+        }
+
+        // Vérifier si déjà connecté
+        window.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                window.location.href = '/research-platform/dashboard.jsp';
+            }
+        });
+    </script>
 </body>
 </html>
