@@ -1,5 +1,6 @@
 package sn.esmt.cartographie.rest;
 
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,7 +10,7 @@ public class PageController {
 
     @GetMapping("/")
     public String index(Authentication authentication) {
-        if (authentication != null && authentication.isAuthenticated()) {
+        if (isAuthenticated(authentication)) {
             return "redirect:/dashboard";
         }
         return "redirect:/login";
@@ -17,7 +18,7 @@ public class PageController {
 
     @GetMapping("/login")
     public String login(Authentication authentication) {
-        if (authentication != null && authentication.isAuthenticated()) {
+        if (isAuthenticated(authentication)) {
             return "redirect:/dashboard";
         }
         return "login";
@@ -25,9 +26,15 @@ public class PageController {
 
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
+        if (!isAuthenticated(authentication)) {
             return "redirect:/login";
         }
         return "dashboard";
+    }
+
+    private boolean isAuthenticated(Authentication authentication) {
+        return authentication != null && 
+               authentication.isAuthenticated() && 
+               !(authentication instanceof AnonymousAuthenticationToken);
     }
 }
