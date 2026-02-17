@@ -26,15 +26,14 @@ public class PageController {
 
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication) {
-        if (!isAuthenticated(authentication)) {
-            return "redirect:/login";
-        }
+        // ✅ MODIFIÉ: Permettre l'accès au dashboard sans vérifier Spring Security
+        // La sécurité se fait côté client avec le JWT dans localStorage
         return "dashboard";
     }
 
     private boolean isAuthenticated(Authentication authentication) {
-        return authentication != null && 
-               authentication.isAuthenticated() && 
-               !(authentication instanceof AnonymousAuthenticationToken);
+        return authentication != null &&
+                authentication.isAuthenticated() &&
+                !(authentication instanceof AnonymousAuthenticationToken);
     }
 }

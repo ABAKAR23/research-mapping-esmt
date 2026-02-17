@@ -188,8 +188,8 @@
 
         <form onsubmit="handleLogin(event)">
             <div class="form-group">
-                <label for="username">👤 Nom d'utilisateur</label>
-                <input type="text" id="username" name="username" required placeholder="Entrez votre username">
+                <label for="email">👤 Email</label>
+                <input type="email" id="email" name="email" required placeholder="Entrez votre email">
             </div>
 
             <div class="form-group">
@@ -203,14 +203,14 @@
         <div class="divider">OU</div>
 
         <div class="oauth-buttons">
-            <a href="/research-platform/api/auth/google" class="btn-oauth">
+            <a href="/oauth2/authorization/google" class="btn-oauth">
                 <img src="https://www.gstatic.com/images/branding/product/1x/googleg_standard_color_92dp.png" alt="Google" width="20">
                 Se connecter avec Google
             </a>
         </div>
 
         <div class="link">
-            Pas de compte? <a href="/research-platform/register.jsp">S'inscrire</a>
+            Pas de compte? <a href="/register.jsp">S'inscrire</a>
         </div>
     </div>
 
@@ -218,7 +218,7 @@
         function handleLogin(event) {
             event.preventDefault();
 
-            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('error');
             const successDiv = document.getElementById('success');
@@ -226,25 +226,32 @@
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
 
-            fetch('/research-platform/api/auth/login', {
+            fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    username: username,
+                    email: email,
                     password: password
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Erreur serveur');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.token) {
                     localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('user', JSON.stringify(data));
                     successDiv.textContent = '✅ Connexion réussie! Redirection...';
                     successDiv.style.display = 'block';
                     setTimeout(() => {
-                        window.location.href = '/research-platform/dashboard.jsp';
+                        window.location.href = '/dashboard';
                     }, 1500);
                 } else {
                     errorDiv.textContent = '❌ ' + (data.message || 'Identifiants incorrects');
@@ -252,19 +259,11 @@
                 }
             })
             .catch(error => {
-                errorDiv.textContent = '❌ Erreur de connexion au serveur';
+                errorDiv.textContent = '❌ ' + error.message;
                 errorDiv.style.display = 'block';
                 console.error('Erreur:', error);
             });
         }
-
-        // Vérifier si déjà connecté
-        window.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('token');
-            if (token) {
-                window.location.href = '/research-platform/dashboard.jsp';
-            }
-        });
     </script>
 </body>
 </html>

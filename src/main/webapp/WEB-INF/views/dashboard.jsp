@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - ESMT Research Mapping</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Tableau de Bord - ESMT Research Mapping</title>
     <style>
         * {
             margin: 0;
@@ -16,322 +15,286 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f5f5f5;
-            color: #333;
         }
 
         .navbar {
-            background: white;
-            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .navbar h1 {
-            color: #003d82;
+            margin: 0;
             font-size: 24px;
         }
 
-        .nav-right {
+        .navbar-right {
             display: flex;
             align-items: center;
             gap: 20px;
         }
 
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .username {
-            font-weight: 600;
-            color: #333;
+        .user-name {
+            font-size: 0.95em;
         }
 
         .btn-logout {
-            padding: 8px 16px;
-            background: #dc3545;
+            background: rgba(255, 255, 255, 0.2);
             color: white;
-            border: none;
+            padding: 8px 16px;
+            border: 1px solid white;
             border-radius: 5px;
             cursor: pointer;
-            font-weight: 500;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
         }
 
         .btn-logout:hover {
-            background: #c82333;
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .container {
-            padding: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .welcome-section {
-            margin-bottom: 2rem;
-        }
-
-        .welcome-section h2 {
-            color: #003d82;
-            margin-bottom: 10px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: white;
+            max-width: 1200px;
+            margin: 40px auto;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-left: 5px solid #667eea;
         }
 
-        .stat-card h3 {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-
-        .stat-value {
-            font-size: 32px;
-            font-weight: bold;
-            color: #003d82;
-        }
-
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 20px;
-            margin-bottom: 2rem;
-        }
-
-        .chart-container {
+        .card {
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            position: relative;
-            height: 400px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
 
-        .chart-container h3 {
+        .card h2 {
             color: #003d82;
             margin-bottom: 15px;
-            font-size: 18px;
+            font-size: 1.8em;
         }
 
-        .chart-wrapper {
-            position: relative;
-            height: 350px;
+        .user-info {
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .user-info p {
+            margin: 12px 0;
+            font-size: 1.05em;
+        }
+
+        .user-info strong {
+            color: #003d82;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: transform 0.3s;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-box h3 {
+            font-size: 2.5em;
+            margin: 10px 0;
+        }
+
+        .stat-box p {
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+
+        .api-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .api-link:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .welcome-message {
+            font-size: 1.1em;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #764ba2;
+        }
+
+        .btn-secondary {
+            background: #ecf0f1;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #bdc3c7;
         }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div>
-            <h1>🔬 ESMT Research Mapping</h1>
+    <div class="navbar">
+        <h1>🔬 ESMT Research Mapping</h1>
+        <div class="navbar-right">
+            <span class="user-name">Bienvenue, <strong id="displayName">Utilisateur</strong> 👋</span>
+            <button class="btn-logout" onclick="logout()">Se Déconnecter</button>
         </div>
-        <div class="nav-right">
-            <div class="user-info">
-                <span class="username" id="username">Chargement...</span>
-            </div>
-            <button class="btn-logout" onclick="handleLogout()">Déconnexion</button>
-        </div>
-    </nav>
+    </div>
 
-    <!-- Main Content -->
     <div class="container">
-        <div class="welcome-section">
-            <h2 id="welcome">Bienvenue! 👋</h2>
-            <p>Tableau de bord des projets de recherche</p>
+        <!-- Carte de Bienvenue -->
+        <div class="card">
+            <h2>Tableau de Bord</h2>
+
+            <div class="user-info">
+                <p><strong>📧 Email :</strong> <span id="userEmail">Chargement...</span></p>
+                <p><strong>👤 Rôle :</strong> <span id="userRole">Chargement...</span></p>
+                <p><strong>🔑 ID Utilisateur :</strong> <span id="userId">Chargement...</span></p>
+            </div>
+
+            <p class="welcome-message">
+                ✅ Vous êtes maintenant connecté à l'application ESMT Research Mapping.
+                Cette plateforme vous permet de gérer et de cartographier les projets de recherche de l'école.
+            </p>
         </div>
 
-        <!-- Statistics Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>📊 Total Projets</h3>
-                <div class="stat-value" id="totalProjects">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>✅ Projets Approuvés</h3>
-                <div class="stat-value" id="approvedProjects">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>⏳ En Attente</h3>
-                <div class="stat-value" id="pendingProjects">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>👥 Chercheurs</h3>
-                <div class="stat-value" id="totalResearchers">0</div>
+        <!-- Statistiques -->
+        <div class="card">
+            <h2>📊 Statistiques</h2>
+
+            <div class="stats">
+                <div class="stat-box">
+                    <h3>0</h3>
+                    <p>Projets</p>
+                </div>
+                <div class="stat-box">
+                    <h3>0</h3>
+                    <p>Utilisateurs</p>
+                </div>
+                <div class="stat-box">
+                    <h3>0</h3>
+                    <p>Domaines</p>
+                </div>
+                <div class="stat-box">
+                    <h3>0</h3>
+                    <p>Chercheurs</p>
+                </div>
             </div>
         </div>
 
-        <!-- Charts -->
-        <div class="charts-grid">
-            <div class="chart-container">
-                <h3>📈 Projets par Statut</h3>
-                <div class="chart-wrapper">
-                    <canvas id="statusChart"></canvas>
-                </div>
+        <!-- Actions -->
+        <div class="card">
+            <h2>⚡ Actions Rapides</h2>
+
+            <div class="actions">
+                <a href="/swagger-ui.html" target="_blank" class="btn btn-primary">
+                    📚 Documentation API
+                </a>
+                <a href="/h2-console" target="_blank" class="btn btn-secondary">
+                    🗄️ Console H2 (Dev)
+                </a>
             </div>
-            <div class="chart-container">
-                <h3>🎯 Projets par Domaine</h3>
-                <div class="chart-wrapper">
-                    <canvas id="domainChart"></canvas>
-                </div>
-            </div>
-            <div class="chart-container">
-                <h3>📅 Projets par Mois</h3>
-                <div class="chart-wrapper">
-                    <canvas id="monthChart"></canvas>
-                </div>
-            </div>
-            <div class="chart-container">
-                <h3>👨‍💼 Top Chercheurs</h3>
-                <div class="chart-wrapper">
-                    <canvas id="researchersChart"></canvas>
-                </div>
-            </div>
+        </div>
+
+        <!-- Informations -->
+        <div class="card">
+            <h2>ℹ️ Informations</h2>
+
+            <p class="welcome-message">
+                <strong>🚀 Application :</strong> ESMT Research Mapping v1.0<br>
+                <strong>🔐 Authentification :</strong> JWT Token + OAuth2 Google<br>
+                <strong>💾 Base de Données :</strong> MySQL 8.0+<br>
+                <strong>🛠️ Framework :</strong> Spring Boot 3.2.0<br>
+            </p>
+
+            <p class="welcome-message" style="margin-top: 15px;">
+                Pour accéder à la documentation complète de l'API, cliquez sur
+                <a href="/swagger-ui.html" class="api-link">Documentation API</a>
+            </p>
         </div>
     </div>
 
     <script>
-        // Vérifier l'authentification
+        // Afficher les infos utilisateur au chargement
         window.addEventListener('DOMContentLoaded', function() {
             const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+
+            // Si pas de token, rediriger vers le login
             if (!token) {
-                window.location.href = '/research-platform/login.jsp';
+                window.location.href = '/login';
                 return;
             }
 
-            // Charger les données utilisateur
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            document.getElementById('username').textContent = user.name || 'Utilisateur';
-            document.getElementById('welcome').textContent = `Bienvenue, ${user.name}! 👋`;
-
-            // Charger les statistiques
-            loadStatistics();
+            // Afficher les infos utilisateur
+            if (user) {
+                try {
+                    const userData = JSON.parse(user);
+                    document.getElementById('userEmail').textContent = userData.email || 'N/A';
+                    document.getElementById('userRole').textContent = userData.role || 'N/A';
+                    document.getElementById('userId').textContent = userData.userId || 'N/A';
+                    document.getElementById('displayName').textContent = userData.email.split('@')[0] || 'Utilisateur';
+                } catch (e) {
+                    console.error('Erreur parsing user:', e);
+                }
+            }
         });
 
-        function handleLogout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/research-platform/login.jsp';
-        }
-
-        function loadStatistics() {
-            const token = localStorage.getItem('token');
-
-            fetch('/research-platform/api/statistics/all', {
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Update stat cards
-                document.getElementById('totalProjects').textContent = data.totalProjects || 0;
-                document.getElementById('approvedProjects').textContent = data.approvedProjects || 0;
-                document.getElementById('pendingProjects').textContent = data.pendingProjects || 0;
-                document.getElementById('totalResearchers').textContent = data.totalResearchers || 0;
-
-                // Create charts
-                createStatusChart(data.projectsByStatus || {});
-                createDomainChart(data.projectsByDomain || {});
-                createMonthChart(data.projectsByMonth || {});
-                createResearchersChart(data.topResearchers || []);
-            })
-            .catch(error => {
-                console.error('Erreur:', error);
-            });
-        }
-
-        function createStatusChart(data) {
-            const ctx = document.getElementById('statusChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(data),
-                    datasets: [{
-                        data: Object.values(data),
-                        backgroundColor: ['#28a745', '#ffc107', '#dc3545']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-        }
-
-        function createDomainChart(data) {
-            const ctx = document.getElementById('domainChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(data),
-                    datasets: [{
-                        label: 'Nombre de projets',
-                        data: Object.values(data),
-                        backgroundColor: '#667eea'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y'
-                }
-            });
-        }
-
-        function createMonthChart(data) {
-            const ctx = document.getElementById('monthChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: Object.keys(data),
-                    datasets: [{
-                        label: 'Projets par mois',
-                        data: Object.values(data),
-                        borderColor: '#764ba2',
-                        backgroundColor: 'rgba(118, 75, 162, 0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-        }
-
-        function createResearchersChart(data) {
-            const ctx = document.getElementById('researchersChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(r => r.name),
-                    datasets: [{
-                        label: 'Nombre de projets',
-                        data: data.map(r => r.projectCount),
-                        backgroundColor: '#ffc107'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y'
-                }
-            });
+        // Fonction de déconnexion
+        function logout() {
+            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            }
         }
     </script>
 </body>

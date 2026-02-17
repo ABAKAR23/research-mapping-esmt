@@ -10,11 +10,8 @@ import sn.esmt.cartographie.dto.LoginRequest;
 import sn.esmt.cartographie.dto.TokenResponse;
 import sn.esmt.cartographie.service.AuthenticationService;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "API d'authentification")
 public class AuthController {
 
@@ -22,34 +19,20 @@ public class AuthController {
     private AuthenticationService authenticationService;
 
     @PostMapping("/login")
-    @Operation(summary = "Connexion utilisateur")
+    @Operation(summary = "Connexion avec email et mot de passe")
     public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
-        TokenResponse token = authenticationService.login(loginRequest);
-        return ResponseEntity.ok(token);
-    }
-
-    @GetMapping("/oauth2/success")
-    @Operation(summary = "Callback OAuth2 success")
-    public ResponseEntity<Map<String, String>> oauth2Success() {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Authentification OAuth2 réussie");
+        TokenResponse response = authenticationService.login(loginRequest);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/validate")
-    @Operation(summary = "Valider le token")
-    public ResponseEntity<Map<String, Object>> validateToken(@RequestHeader("Authorization") String token) {
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
+    @Operation(summary = "Valider un token JWT")
+    public ResponseEntity<String> validateToken(@RequestHeader("Authorization") String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            String jwt = token.substring(7);
+            authenticationService.validateToken(jwt);
+            return ResponseEntity.ok("Token valide");
         }
-        var user = authenticationService.validateToken(token);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("valid", true);
-        response.put("userId", user.getId());
-        response.put("email", user.getEmail());
-        response.put("role", user.getRole() != null ? user.getRole().getLibelle() : "USER");
-        
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(401).body("Token invalide");
     }
 }

@@ -2,12 +2,9 @@ package sn.esmt.cartographie.dto;
 
 public class TokenResponse {
     private String token;
-    private String type = "Bearer";
     private Long userId;
     private String email;
     private String role;
-
-    public TokenResponse() {}
 
     public TokenResponse(String token, Long userId, String email, String role) {
         this.token = token;
@@ -16,43 +13,16 @@ public class TokenResponse {
         this.role = role;
     }
 
-    public String getToken() {
-        return token;
-    }
+    // Getters et Setters
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
 
-    public void setToken(String token) {
-        this.token = token;
-    }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
-    public String getType() {
-        return type;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
 }
