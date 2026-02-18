@@ -134,14 +134,6 @@ public class StatistiqueService {
      * @return Nombre total de projets
      */
     public Long compterTotalProjets() {
-        return (long) projetRepository.findAll().size();
-    }
-
-    /**
-     * Retourne toutes les statistiques en un seul appel
-     * @return StatisticsDTO contenant toutes les statistiques
-     */
-    public StatisticsDTO getAllStatistics() {
-        return getStatistics();
+        return projetRepository.count();
     }
 }

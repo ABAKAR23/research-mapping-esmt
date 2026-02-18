@@ -163,23 +163,11 @@ class StatistiqueServiceTest {
 
     @Test
     void testCompterTotalProjets() {
-        when(projetRepository.findAll()).thenReturn(testProjects);
+        when(projetRepository.count()).thenReturn(3L);
 
         Long totalProjets = statistiqueService.compterTotalProjets();
 
         assertEquals(3L, totalProjets);
-        verify(projetRepository, times(1)).findAll();
-    }
-
-    @Test
-    void testGetAllStatistics() {
-        when(projetRepository.findAll()).thenReturn(testProjects);
-
-        var stats = statistiqueService.getAllStatistics();
-
-        assertNotNull(stats);
-        assertEquals(3L, stats.getTotalProjets());
-        assertEquals(16000000.0, stats.getBudgetTotal());
-        verify(projetRepository, times(1)).findAll();
+        verify(projetRepository, times(1)).count();
     }
 }
