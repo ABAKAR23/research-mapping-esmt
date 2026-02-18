@@ -39,7 +39,7 @@ class StatisticsControllerTest {
 
         when(statistiqueService.getStatistics()).thenReturn(stats);
 
-        mockMvc.perform(get("/statistics")
+        mockMvc.perform(get("/api/statistics")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalProjets").value(10))
@@ -53,7 +53,7 @@ class StatisticsControllerTest {
     void testGetTotalBudget() throws Exception {
         when(statistiqueService.calculerBudgetTotal()).thenReturn(25000000.0);
 
-        mockMvc.perform(get("/statistics/budget-total")
+        mockMvc.perform(get("/api/statistics/budget-total")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string("2.5E7"));
