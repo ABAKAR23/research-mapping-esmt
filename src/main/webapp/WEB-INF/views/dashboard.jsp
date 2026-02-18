@@ -486,6 +486,39 @@
         </style>
     </head>
 
+    <script>
+        // Define charts variable globally
+        let charts = {};
+
+        // ==================== NAVIGATION ====================
+        function showPage(pageId, event) {
+            if (event) event.preventDefault();
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            if (event) {
+                const link = event.target.closest('.nav-link');
+                if (link) link.classList.add('active');
+            }
+
+            // Redimensionner les graphiques si nécessaire
+            if (pageId === 'statistics') {
+                setTimeout(() => {
+                    Object.values(charts).forEach(c => { if (c && c.resize) c.resize(); });
+                }, 100);
+            }
+        }
+
+        // ==================== LOGOUT ====================
+        function logout() {
+            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/logout';
+            }
+        }
+    </script>
+
     <body>
         <!-- Navbar -->
         <div class="navbar">
@@ -856,7 +889,7 @@
         </div>
 
         <script>
-            let charts = {};
+            // Charts variable already defined earlier
             let allDomains = [];
             let allUsers = [];
             let allProjects = [];
@@ -890,24 +923,7 @@
                 loadDomains();
             }
 
-            // ==================== NAVIGATION ====================
-            function showPage(pageId, event) {
-                if (event) event.preventDefault();
-                document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-                document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-                document.getElementById(pageId).classList.add('active');
-                if (event) {
-                    const link = event.target.closest('.nav-link');
-                    if (link) link.classList.add('active');
-                }
-
-                // Redimensionner les graphiques si nécessaire
-                if (pageId === 'statistics') {
-                    setTimeout(() => {
-                        Object.values(charts).forEach(c => { if (c && c.resize) c.resize(); });
-                    }, 100);
-                }
-            }
+            // showPage and logout functions are already defined in the head section
 
             // ==================== ALERT ====================
             function showAlert(message, type) {
@@ -1457,14 +1473,7 @@
                     });
             }
 
-            // ==================== LOGOUT ====================
-            function logout() {
-                if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    window.location.href = '/logout';
-                }
-            }
+            // logout function is already defined in the head section
         </script>
     </body>
 
