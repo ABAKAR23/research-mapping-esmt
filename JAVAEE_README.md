@@ -162,6 +162,11 @@ Edit `src/main/resources/META-INF/persistence.xml`:
 <property name="javax.persistence.jdbc.password" value="your_password"/>
 ```
 
+**Security Note**: The default configuration has an empty password for local development. In production:
+- Use environment variables: `${DB_PASSWORD}`
+- Use JNDI datasources configured in the application server
+- Never commit real credentials to version control
+
 ### 3. Build the Application
 ```bash
 mvn clean package
@@ -247,8 +252,33 @@ Simply navigate to the endpoints in your browser or use Postman for POST/PUT/DEL
 - Both implementations can coexist in the same project
 - The Java EE version uses different entity classes in `sn.esmt.model` package
 - Database tables are shared but with English names for Java EE version
-- For production, consider using BCrypt for password hashing instead of SHA-256
-- EntityManagerFactory instances should be properly closed when the application shuts down
+- **EntityManagerFactory is managed as a singleton** via JPAUtil class for optimal performance
+- **Security Note**: The current implementation uses SHA-256 for password hashing. For production, consider using BCrypt, Argon2, or PBKDF2
+- **Authentication**: The API does not currently implement session management or JWT tokens. For production, implement proper authentication middleware
+- **Authorization**: The userId is passed as a query parameter. In production, extract this from an authenticated session or JWT token
+
+## Production Considerations
+
+### Security Improvements Needed
+1. **Password Hashing**: Replace SHA-256 with BCrypt or Argon2
+2. **Authentication**: Implement JWT tokens or session-based authentication
+3. **Authorization**: Use servlet filters or JAX-RS filters to validate user permissions
+4. **HTTPS**: Always use HTTPS in production
+5. **Database Credentials**: Use environment variables or secure configuration management
+6. **Input Validation**: Add comprehensive input validation
+7. **SQL Injection**: The implementation uses parameterized queries (safe), but always validate input
+
+### Performance Improvements
+1. **Connection Pooling**: Configure a connection pool (HikariCP, C3P0)
+2. **Caching**: Implement second-level cache with Hibernate
+3. **Lazy Loading**: Optimize entity relationships and fetch strategies
+4. **Query Optimization**: Add indexes, optimize N+1 queries
+
+### Scalability
+1. **Load Balancing**: Configure for multiple application servers
+2. **Database Replication**: Set up master-slave or cluster
+3. **Caching Layer**: Add Redis or Memcached
+4. **CDN**: Use CDN for static resources
 
 ## Troubleshooting
 

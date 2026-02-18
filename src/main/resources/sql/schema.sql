@@ -113,16 +113,19 @@ ON DUPLICATE KEY UPDATE
 
 -- ================================================================
 -- Sample Admin User (password: admin123)
--- Note: This is a hashed password - change in production!
+-- Note: The password hash below is a PLACEHOLDER and MUST be changed!
+-- To create a proper admin user, use the AuthService REST API:
+-- POST /api/javaee/auth/register with proper credentials
+-- or generate a hash programmatically using AuthService.hashPassword()
 -- ================================================================
--- The password hash below is for demonstration only
--- In production, use AuthService.hashPassword() method
-INSERT INTO users (username, email, first_name, last_name, password_hash, role_id, is_active)
-SELECT 'admin', 'admin@esmt.sn', 'Admin', 'ESMT', 
-    'dGVzdF9oYXNoX2NoYW5nZV9pbl9wcm9kdWN0aW9u', -- This is a placeholder, use proper hash
-    (SELECT id FROM roles WHERE libelle = 'ADMIN'),
-    TRUE
-WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'admin');
+-- Example: To create admin user after application starts:
+-- curl -X POST http://localhost:8080/research-mapping-esmt/api/javaee/auth/register \
+--   -H "Content-Type: application/json" \
+--   -d '{"username":"admin","email":"admin@esmt.sn","password":"admin123","firstName":"Admin","lastName":"ESMT"}'
+--
+-- Then update the role:
+-- UPDATE users SET role_id = (SELECT id FROM roles WHERE libelle = 'ADMIN') WHERE username = 'admin';
+-- ================================================================
 
 -- ================================================================
 -- End of Schema

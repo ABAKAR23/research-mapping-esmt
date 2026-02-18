@@ -2,20 +2,19 @@ package sn.esmt.dao;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
 import sn.esmt.model.Role;
+import sn.esmt.util.JPAUtil;
 
 import java.util.List;
 import java.util.Optional;
 
 public class RoleDAO {
     
-    private static final String PERSISTENCE_UNIT_NAME = "research-pu";
     private EntityManagerFactory emf;
     
     public RoleDAO() {
-        emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
+        emf = JPAUtil.getEntityManagerFactory();
     }
     
     public RoleDAO(EntityManagerFactory emf) {
@@ -77,8 +76,6 @@ public class RoleDAO {
     }
     
     public void close() {
-        if (emf != null && emf.isOpen()) {
-            emf.close();
-        }
+        // EntityManagerFactory is now managed by JPAUtil - do not close here
     }
 }

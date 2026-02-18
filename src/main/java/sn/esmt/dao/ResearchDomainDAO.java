@@ -2,20 +2,19 @@ package sn.esmt.dao;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
 import sn.esmt.model.ResearchDomain;
+import sn.esmt.util.JPAUtil;
 
 import java.util.List;
 import java.util.Optional;
 
 public class ResearchDomainDAO {
     
-    private static final String PERSISTENCE_UNIT_NAME = "research-pu";
     private EntityManagerFactory emf;
     
     public ResearchDomainDAO() {
-        emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
+        emf = JPAUtil.getEntityManagerFactory();
     }
     
     public ResearchDomainDAO(EntityManagerFactory emf) {
@@ -97,8 +96,6 @@ public class ResearchDomainDAO {
     }
     
     public void close() {
-        if (emf != null && emf.isOpen()) {
-            emf.close();
-        }
+        // EntityManagerFactory is now managed by JPAUtil - do not close here
     }
 }
