@@ -315,7 +315,5 @@ const API = {
     }
 };
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = API;
-}
+// Make API available globally (no module export needed for script tags without type="module")
+window.API = API;

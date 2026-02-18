@@ -3,6 +3,15 @@
  * Comprehensive client-side validation for all forms
  */
 
+// Constants
+const MIN_PROJECT_START_DATE = new Date('2000-01-01');
+const MIN_TITLE_LENGTH = 5;
+const MAX_TITLE_LENGTH = 200;
+const MIN_DESCRIPTION_LENGTH = 20;
+const MAX_DESCRIPTION_LENGTH = 1000;
+const MIN_NAME_LENGTH = 3;
+const MIN_INSTITUTION_LENGTH = 3;
+
 /**
  * Validate Project Form
  */
@@ -16,11 +25,11 @@ function validateProjectForm(form) {
         if (!titre.value || titre.value.trim().length === 0) {
             showError(titre, 'Le titre est obligatoire');
             isValid = false;
-        } else if (titre.value.trim().length < 5) {
-            showError(titre, 'Le titre doit contenir au moins 5 caractères');
+        } else if (titre.value.trim().length < MIN_TITLE_LENGTH) {
+            showError(titre, `Le titre doit contenir au moins ${MIN_TITLE_LENGTH} caractères`);
             isValid = false;
-        } else if (titre.value.trim().length > 200) {
-            showError(titre, 'Le titre ne doit pas dépasser 200 caractères');
+        } else if (titre.value.trim().length > MAX_TITLE_LENGTH) {
+            showError(titre, `Le titre ne doit pas dépasser ${MAX_TITLE_LENGTH} caractères`);
             isValid = false;
         } else {
             showSuccess(titre);
@@ -33,11 +42,11 @@ function validateProjectForm(form) {
         if (!description.value || description.value.trim().length === 0) {
             showError(description, 'La description est obligatoire');
             isValid = false;
-        } else if (description.value.trim().length < 20) {
-            showError(description, 'La description doit contenir au moins 20 caractères');
+        } else if (description.value.trim().length < MIN_DESCRIPTION_LENGTH) {
+            showError(description, `La description doit contenir au moins ${MIN_DESCRIPTION_LENGTH} caractères`);
             isValid = false;
-        } else if (description.value.trim().length > 1000) {
-            showError(description, 'La description ne doit pas dépasser 1000 caractères');
+        } else if (description.value.trim().length > MAX_DESCRIPTION_LENGTH) {
+            showError(description, `La description ne doit pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères`);
             isValid = false;
         } else {
             showSuccess(description);
@@ -82,8 +91,8 @@ function validateProjectForm(form) {
             } else if (debut > fin) {
                 showError(dateFin, 'La date de fin doit être postérieure à la date de début');
                 isValid = false;
-            } else if (debut < new Date('2000-01-01')) {
-                showError(dateDebut, 'La date de début ne peut pas être avant l\'an 2000');
+            } else if (debut < MIN_PROJECT_START_DATE) {
+                showError(dateDebut, `La date de début ne peut pas être avant ${MIN_PROJECT_START_DATE.getFullYear()}`);
                 isValid = false;
             } else {
                 showSuccess(dateDebut);

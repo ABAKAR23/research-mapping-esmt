@@ -267,10 +267,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom JavaScript -->
-    <script type="module" src="${pageContext.request.contextPath}/js/api.js"></script>
-    <script type="module">
-        import API from '${pageContext.request.contextPath}/js/api.js';
-
+    <script src="${pageContext.request.contextPath}/js/api.js"></script>
+    <script>
         // State
         let allUsers = [];
         let filteredUsers = [];
