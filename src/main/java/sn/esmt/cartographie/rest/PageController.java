@@ -17,17 +17,17 @@ public class PageController {
     @GetMapping("/")
     public String index(Authentication authentication) {
         logger.debug("Accessing index. Authenticated: {}", isAuthenticated(authentication));
-        if (isAuthenticated(authentication)) {
-            return "redirect:/dashboard";
-        }
+
+        // ✅ NE PAS rediriger automatiquement - toujours afficher la page de login
         return "login";
     }
 
     @GetMapping("/login")
     public String login(Authentication authentication) {
         logger.debug("Accessing login. Authenticated: {}", isAuthenticated(authentication));
-        // ✅ NE PLUS rediriger automatiquement - juste afficher la page
-        // La redirection se fait uniquement après connexion réussie
+
+        // ✅ TOUJOURS afficher la page de login, même si déjà authentifié
+        // C'est le JavaScript qui gère la redirection après connexion
         return "login";
     }
 
@@ -35,13 +35,11 @@ public class PageController {
     public String dashboard(Authentication authentication, Model model) {
         logger.debug("Accessing dashboard. Authenticated: {}", isAuthenticated(authentication));
 
-        // ✅ Permettre l'accès initial, la vérification se fait côté client avec JWT
         if (!isAuthenticated(authentication)) {
             logger.debug("User not authenticated, redirecting to login");
             return "redirect:/login";
         }
 
-        // Get the role
         String role = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .findFirst()
@@ -49,21 +47,30 @@ public class PageController {
 
         logger.debug("User role: {}", role);
 
+        // Vérifier que l'utilisateur a le bon rôle pour cette page
         if (role.equals("ROLE_CANDIDAT")) {
-            return "dashboard-candidat";
-        } else if (role.equals("ROLE_ADMIN") || role.equals("ROLE_GESTIONNAIRE")) {
-            return "dashboard";
-        } else {
-            // Fallback
-            return "dashboard-candidat";
+            logger.debug("Candidat trying to access admin dashboard, redirecting to candidat");
+            return "redirect:/candidat";
         }
+
+        return "dashboard";
     }
 
     @GetMapping("/candidat")
     public String candidat(Authentication authentication) {
         logger.debug("Accessing candidat dashboard. Authenticated: {}", isAuthenticated(authentication));
-        // ✅ Route directe pour les candidats
+
+        if (!isAuthenticated(authentication)) {
+            return "redirect:/login";
+        }
+
         return "dashboard-candidat";
+    }
+
+    @GetMapping("/logout-success")
+    public String logoutSuccess() {
+        logger.debug("Logout successful");
+        return "redirect:/login?logout";
     }
 
     private boolean isAuthenticated(Authentication authentication) {

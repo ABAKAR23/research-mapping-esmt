@@ -10,8 +10,10 @@ public class StatisticsDTO {
     private Map<String, Double> budgetParDomaine;
     private Double tauxMoyenAvancement;
     private Double budgetTotal;
+    private Map<Integer, Long> evolutionTemporelle;
 
-    public StatisticsDTO() {}
+    public StatisticsDTO() {
+    }
 
     public Long getTotalProjets() {
         return totalProjets;
@@ -67,5 +69,13 @@ public class StatisticsDTO {
 
     public void setBudgetTotal(Double budgetTotal) {
         this.budgetTotal = budgetTotal;
+    }
+
+    public Map<Integer, Long> getEvolutionTemporelle() {
+        return evolutionTemporelle;
+    }
+
+    public void setEvolutionTemporelle(Map<Integer, Long> evolutionTemporelle) {
+        this.evolutionTemporelle = evolutionTemporelle;
     }
 }

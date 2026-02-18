@@ -57,6 +57,33 @@ public class ProjetService {
         return convertToDTO(projet);
     }
 
+    public ProjetDTO getProjetByIdSecured(Long id, String email) {
+        Projet projet = projetRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Projet non trouvé avec l'id: " + id));
+
+        Utilisateur user = utilisateurRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé"));
+
+        // Admin et Gestionnaire peuvent voir tous les projets
+        boolean isAdminOrManager = user.getRole().getLibelle().equals("ADMIN")
+                || user.getRole().getLibelle().equals("GESTIONNAIRE");
+
+        if (!isAdminOrManager) {
+            // Candidat : vérifier qu'il est responsable ou participant
+            boolean isOwner = projet.getResponsable_projet() != null
+                    && projet.getResponsable_projet().getId().equals(user.getId());
+            boolean isParticipant = projet.getListe_participants() != null
+                    && projet.getListe_participants().stream()
+                            .anyMatch(p -> p.getId().equals(user.getId()));
+
+            if (!isOwner && !isParticipant) {
+                throw new UnauthorizedException("Vous n'êtes pas autorisé à voir ce projet");
+            }
+        }
+
+        return convertToDTO(projet);
+    }
+
     public ProjetDTO createProjet(ProjetDTO projetDTO, String managerEmail) {
         Utilisateur manager = utilisateurRepository.findByEmail(managerEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé"));

@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 import sn.esmt.cartographie.dto.UtilisateurDTO;
 import sn.esmt.cartographie.service.UtilisateurService;
@@ -15,13 +17,32 @@ import sn.esmt.cartographie.service.UtilisateurService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 @Tag(name = "Users", description = "API de gestion des utilisateurs")
 @SecurityRequirement(name = "bearer-jwt")
 public class UserController {
 
     @Autowired
     private UtilisateurService utilisateurService;
+
+    @GetMapping("/me")
+    @Operation(summary = "Obtenir le profil de l'utilisateur connecté")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTIONNAIRE', 'CANDIDAT')")
+    public ResponseEntity<UtilisateurDTO> getMyProfile(@AuthenticationPrincipal OAuth2User principal) {
+        String email = principal.getAttribute("email");
+        return ResponseEntity.ok(utilisateurService.getUtilisateurByEmail(email));
+    }
+
+    @PutMapping("/me")
+    @Operation(summary = "Mettre à jour le profil de l'utilisateur connecté")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTIONNAIRE', 'CANDIDAT')")
+    public ResponseEntity<UtilisateurDTO> updateMyProfile(
+            @AuthenticationPrincipal OAuth2User principal,
+            @Valid @RequestBody UtilisateurDTO utilisateurDTO) {
+        String email = principal.getAttribute("email");
+        UtilisateurDTO updated = utilisateurService.updateMyProfile(email, utilisateurDTO);
+        return ResponseEntity.ok(updated);
+    }
 
     @GetMapping
     @Operation(summary = "Obtenir tous les utilisateurs")

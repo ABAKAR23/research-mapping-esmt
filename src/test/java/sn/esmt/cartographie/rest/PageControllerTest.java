@@ -31,7 +31,8 @@ class PageControllerTest {
     @Test
     @WithMockUser(username = "test@example.com")
     void testLoginPageWithAuthenticatedUser() throws Exception {
-        // Authenticated user should be able to access login page (no automatic redirect)
+        // Authenticated user should be able to access login page (no automatic
+        // redirect)
         mockMvc.perform(get("/login"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("login"));
@@ -49,10 +50,10 @@ class PageControllerTest {
     @Test
     @WithMockUser(username = "test@example.com")
     void testIndexPageWithAuthenticatedUser() throws Exception {
-        // Authenticated user should be redirected to dashboard
+        // Page d'accueil affiche toujours la page login
         mockMvc.perform(get("/"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/dashboard"));
+                .andExpect(status().isOk())
+                .andExpect(view().name("login"));
     }
 
     @Test
@@ -76,10 +77,10 @@ class PageControllerTest {
     @Test
     @WithAnonymousUser
     void testCandidatPageWithAnonymousUser() throws Exception {
-        // Anonymous user should be able to access candidat page (client-side validation)
+        // Anonymous user should be redirected to login
         mockMvc.perform(get("/candidat"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("dashboard-candidat"));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
     }
 
     @Test

@@ -36,8 +36,11 @@ public class ProjectController {
     @GetMapping("/{id}")
     @Operation(summary = "Obtenir un projet par ID")
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTIONNAIRE', 'CANDIDAT')")
-    public ResponseEntity<ProjetDTO> getProjectById(@PathVariable Long id) {
-        return ResponseEntity.ok(projetService.getProjetById(id));
+    public ResponseEntity<ProjetDTO> getProjectById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal OAuth2User principal) {
+        String email = principal.getAttribute("email");
+        return ResponseEntity.ok(projetService.getProjetByIdSecured(id, email));
     }
 
     @PostMapping
@@ -76,7 +79,7 @@ public class ProjectController {
 
     @GetMapping("/domaine/{domaineId}")
     @Operation(summary = "Obtenir les projets par domaine")
-    @PreAuthorize("hasAnyRole('ADMIN', 'GESTIONNAIRE', 'CANDIDAT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTIONNAIRE')")
     public ResponseEntity<List<ProjetDTO>> getProjectsByDomain(@PathVariable Long domaineId) {
         return ResponseEntity.ok(projetService.getProjetsByDomaine(domaineId));
     }

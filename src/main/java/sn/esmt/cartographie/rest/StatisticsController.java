@@ -76,4 +76,11 @@ public class StatisticsController {
     public ResponseEntity<Long> getTotalProjects() {
         return ResponseEntity.ok(statistiqueService.compterTotalProjets());
     }
+
+    @GetMapping("/evolution-temporelle")
+    @Operation(summary = "Obtenir l'évolution du nombre de projets par année")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTIONNAIRE')")
+    public ResponseEntity<Map<Integer, Long>> getTemporalEvolution() {
+        return ResponseEntity.ok(statistiqueService.compterProjetsParAnnee());
+    }
 }

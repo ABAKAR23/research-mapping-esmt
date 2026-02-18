@@ -83,6 +83,28 @@ public class UtilisateurService {
         return convertToDTO(updatedUtilisateur);
     }
 
+    public UtilisateurDTO getUtilisateurByEmail(String email) {
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'email: " + email));
+        return convertToDTO(utilisateur);
+    }
+
+    public UtilisateurDTO updateMyProfile(String email, UtilisateurDTO utilisateurDTO) {
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé"));
+
+        // Le candidat ne peut modifier que son nom et institution, pas son rôle
+        if (utilisateurDTO.getNom() != null && !utilisateurDTO.getNom().isEmpty()) {
+            utilisateur.setNom(utilisateurDTO.getNom());
+        }
+        if (utilisateurDTO.getInstitution() != null) {
+            utilisateur.setInstitution(utilisateurDTO.getInstitution());
+        }
+
+        Utilisateur updatedUtilisateur = utilisateurRepository.save(utilisateur);
+        return convertToDTO(updatedUtilisateur);
+    }
+
     public void deleteUtilisateur(Long id) {
         if (!utilisateurRepository.existsById(id)) {
             throw new ResourceNotFoundException("Utilisateur non trouvé avec l'id: " + id);
@@ -96,12 +118,12 @@ public class UtilisateurService {
         dto.setNom(utilisateur.getNom());
         dto.setEmail(utilisateur.getEmail());
         dto.setInstitution(utilisateur.getInstitution());
-        
+
         if (utilisateur.getRole() != null) {
             dto.setRoleId(utilisateur.getRole().getId());
             dto.setRoleLibelle(utilisateur.getRole().getLibelle());
         }
-        
+
         return dto;
     }
 }

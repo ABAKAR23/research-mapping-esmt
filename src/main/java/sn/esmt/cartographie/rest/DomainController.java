@@ -15,7 +15,7 @@ import sn.esmt.cartographie.service.DomaineService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/domains")
+@RequestMapping("/api/domains")
 @Tag(name = "Domains", description = "API de gestion des domaines de recherche")
 @SecurityRequirement(name = "bearer-jwt")
 public class DomainController {

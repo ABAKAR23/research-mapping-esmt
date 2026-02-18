@@ -30,22 +30,48 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "Connexion avec email et mot de passe")
     public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest loginRequest,
-            HttpServletRequest request) {
+                                               HttpServletRequest request) {
+
         TokenResponse response = authenticationService.login(loginRequest);
 
-        // Manually set session authentication for Form Login to work with JSP views
-        String role = response.getRole();
+        // Nettoyer toute session existante
+        HttpSession oldSession = request.getSession(false);
+        if (oldSession != null) {
+            oldSession.invalidate();
+        }
+
+        // Créer une nouvelle session
+        HttpSession session = request.getSession(true);
+
+        // Configurer l'authentification Spring Security
+        String role = "ROLE_" + response.getRole().toUpperCase();
+
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 response.getEmail(),
                 null,
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_" + role)));
+                Collections.singleton(new SimpleGrantedAuthority(role)));
 
-        SecurityContext sc = SecurityContextHolder.getContext();
+        SecurityContext sc = SecurityContextHolder.createEmptyContext();
         sc.setAuthentication(auth);
-        HttpSession session = request.getSession(true);
+        SecurityContextHolder.setContext(sc);
+
+        // Sauvegarder dans la session
         session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, sc);
+        session.setAttribute("user", response);
+        session.setMaxInactiveInterval(3600); // 1 heure
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Déconnexion")
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        SecurityContextHolder.clearContext();
+        return ResponseEntity.ok().body("Déconnecté avec succès");
     }
 
     @GetMapping("/validate")

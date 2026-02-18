@@ -802,25 +802,70 @@
         </div>
 
         ...
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             let charts = {};
             let mesProjets = [];
 
             // Attach logout event listener when DOM is loaded
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 const logoutBtn = document.querySelector('.btn-logout');
                 if (logoutBtn) {
-                    logoutBtn.addEventListener('click', function() {
+                    logoutBtn.addEventListener('click', function (e) {
+                        e.preventDefault();
                         console.log('📤 Tentative de déconnexion...');
                         if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                            window.location.href = '/logout';
+                            // Appel API de déconnexion
+                            fetch('/api/auth/logout', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            })
+                                .then(response => {
+                                    // Nettoyer le stockage local
+                                    localStorage.removeItem('token');
+                                    localStorage.removeItem('user');
+                                    sessionStorage.clear();
+
+                                    // Rediriger vers la page de login
+                                    window.location.href = '/login?logout';
+                                })
+                                .catch(error => {
+                                    console.error('Erreur déconnexion:', error);
+                                    // En cas d'erreur, rediriger quand même
+                                    localStorage.removeItem('token');
+                                    localStorage.removeItem('user');
+                                    window.location.href = '/login?logout';
+                                });
                         }
                     });
                 }
+
+                // Charger les données utilisateur depuis la session
+                loadUserFromSession();
+                loadProjectsData();
             });
 
-            // ✅ PUIS DÉFINIR LES AUTRES FONCTIONS
+            function loadUserFromSession() {
+                // Récupérer les infos utilisateur depuis le localStorage ou depuis une API
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    try {
+                        const user = JSON.parse(userStr);
+                        document.getElementById('userEmail').textContent = user.email || 'Non disponible';
+                        document.getElementById('userNom').textContent = user.nom || 'Candidat';
+                        document.getElementById('userInstitution').textContent = user.institution || 'ESMT';
+
+                        // Mettre à jour la navbar
+                        const displayName = user.email ? user.email.split('@')[0] : 'Candidat';
+                        document.getElementById('displayNameNav').textContent = displayName;
+                        document.getElementById('userAvatarNav').textContent = displayName.charAt(0).toUpperCase();
+                    } catch (e) {
+                        console.error('Erreur parsing user:', e);
+                    }
+                }
+            }
+
             function showPage(pageId, event) {
                 if (event) event.preventDefault();
 
@@ -841,10 +886,16 @@
             function saveProject(event) {
                 event.preventDefault();
 
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    alert('Session expirée, veuillez vous reconnecter');
+                    window.location.href = '/login';
+                    return;
+                }
+
                 const newProject = {
                     titreProjet: document.getElementById('projectTitle').value,
-                    domaineId: null, // À gérer si on a les IDs des domaines, sinon envoyer le nom si le DTO le supporte
-                    domaineNom: document.getElementById('projectDomain').value, // On enverra le nom pour le mapping
+                    domaineId: getDomaineId(document.getElementById('projectDomain').value),
                     description: document.getElementById('projectDescription').value,
                     dateDebut: document.getElementById('projectStartDate').value,
                     dateFin: document.getElementById('projectEndDate').value,
@@ -854,104 +905,92 @@
                     institution: document.getElementById('projectInstitution').value
                 };
 
-                // Mapping manuel du domaine ID si possible ou modification du backend pour accepter le nom
-                // Pour l'instant, faisons simple: supposons que le backend peut trouver le domaine par ID ou Nom
-                // Le DTO a domaineId. Le select a des valeurs textuelles (IA, Santé...). 
-                // Il faudrait des IDs dans les values du select options.
-                // CORRECTION: Le backend attend domaineId. Le select doit avoir des IDs.
-                // On va hardcoder les IDs pour l'instant correspondant au DataInitializer:
-                // IA=1, Santé=2, Énergie=3, Télécoms=4
-
-                const domaines = {
-                    "IA": 1,
-                    "Santé": 2,
-                    "Énergie": 3,
-                    "Télécoms": 4,
-                    "Autre": 1 // Fallback
-                };
-                newProject.domaineId = domaines[newProject.domaineNom] || 1;
-
                 fetch('/api/projects', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
                     },
                     body: JSON.stringify(newProject)
                 })
                     .then(response => {
                         if (response.ok) {
                             return response.json();
+                        } else if (response.status === 401) {
+                            throw new Error('Session expirée');
                         }
                         throw new Error('Erreur lors de la création');
                     })
                     .then(data => {
                         event.target.reset();
                         alert('✅ Projet créé avec succès!');
-                        showPage('mes-projets');
-                        loadProjectsData(); // Recharger la liste
+                        showPage('mes-projets', event);
+                        loadProjectsData();
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('Erreur lors de la création du projet');
+                        if (error.message === 'Session expirée') {
+                            alert('Votre session a expiré. Veuillez vous reconnecter.');
+                            window.location.href = '/login';
+                        } else {
+                            alert('Erreur lors de la création du projet');
+                        }
                     });
             }
 
-            function editProject(id) {
-                alert('Interface de modification du projet ' + id);
+            function getDomaineId(domaineNom) {
+                const domaines = {
+                    "IA": 1,
+                    "Santé": 2,
+                    "Énergie": 3,
+                    "Télécoms": 4,
+                    "Autre": 1
+                };
+                return domaines[domaineNom] || 1;
             }
 
-            function deleteProject(id) {
-                if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
-                    mesProjets = mesProjets.filter(p => p.id !== id);
-                    updateStats();
-                    displayProjects();
-                    alert('✅ Projet supprimé avec succès!');
-                }
-            }
-
-            function updateProfile(event) {
-                event.preventDefault();
-                alert('✅ Profil mis à jour avec succès!');
-            }
-
-            function changePassword() {
-                alert('Interface de changement de mot de passe');
-            }
-
-            // Initialize on page load
-            window.addEventListener('DOMContentLoaded', function () {
-                // Plus de vérification de token local. La session cookie gère l'auth.
-                loadProjectsData();
-                // initCharts is called after data load
-            });
-
-            // Load Projects Data
             function loadProjectsData() {
-                fetch('/api/projects')
-                    .then(response => response.json())
+                const token = localStorage.getItem('token');
+
+                fetch('/api/projects', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        } else if (response.status === 401) {
+                            throw new Error('Non autorisé');
+                        }
+                        throw new Error('Erreur chargement');
+                    })
                     .then(data => {
-                        // Mapper les DTOs backend vers le format attendu par le frontend si nécessaire
                         mesProjets = data.map(p => ({
                             id: p.projectId,
                             titre: p.titreProjet,
                             domaine: p.domaineNom || 'Non spécifié',
                             description: p.description,
-                            dateDebut: p.dateDebut, // Peut nécessiter formatage
+                            dateDebut: p.dateDebut,
                             dateFin: p.dateFin,
                             budget: p.budgetEstime,
                             statut: p.statutProjet,
-                            avancement: p.niveauAvancement,
+                            avancement: p.niveauAvancement || 0,
                             institution: p.institution
                         }));
 
                         updateStats();
                         displayProjects();
-                        initCharts(); // Re-init charts with new data
+                        initCharts();
                     })
-                    .catch(e => console.error("Erreur chargement projets", e));
+                    .catch(e => {
+                        console.error("Erreur chargement projets", e);
+                        if (e.message === 'Non autorisé') {
+                            window.location.href = '/login';
+                        }
+                    });
             }
 
-            // Update Stats
             function updateStats() {
                 const enCours = mesProjets.filter(p => p.statut === 'EN_COURS').length;
                 const termine = mesProjets.filter(p => p.statut === 'TERMINE').length;
@@ -963,7 +1002,6 @@
                 document.getElementById('budgetTotal').textContent = (budget / 1000000).toFixed(0) + 'M F';
             }
 
-            // Display Projects
             function displayProjects() {
                 const container = document.getElementById('projectsList');
 
@@ -1037,39 +1075,180 @@
                 container.innerHTML = html;
             }
 
-            // Initialize Charts
+            function editProject(id) {
+                const projet = mesProjets.find(p => p.id === id);
+                if (!projet) return;
+
+                // Naviguer vers le formulaire
+                showPage('nouveau-projet', null);
+                document.querySelector('#nouveau-projet .page-header h1').textContent = '✏️ Modifier le Projet';
+
+                // Remplir le formulaire
+                document.getElementById('projectTitle').value = projet.titre || '';
+                document.getElementById('projectDescription').value = projet.description || '';
+                document.getElementById('projectStartDate').value = projet.dateDebut ? projet.dateDebut.substring(0, 10) : '';
+                document.getElementById('projectEndDate').value = projet.dateFin ? projet.dateFin.substring(0, 10) : '';
+                document.getElementById('projectBudget').value = projet.budget || '';
+                document.getElementById('projectStatus').value = projet.statut || 'EN_COURS';
+                document.getElementById('projectInstitution').value = projet.institution || '';
+                document.getElementById('projectProgress').value = projet.avancement || 0;
+
+                // Changer la soumission du formulaire pour une mise à jour
+                const form = document.querySelector('#nouveau-projet form');
+                form.onsubmit = function (event) {
+                    event.preventDefault();
+
+                    const updatedProject = {
+                        titreProjet: document.getElementById('projectTitle').value,
+                        domaineId: getDomaineId(document.getElementById('projectDomain').value),
+                        description: document.getElementById('projectDescription').value,
+                        dateDebut: document.getElementById('projectStartDate').value,
+                        dateFin: document.getElementById('projectEndDate').value,
+                        budgetEstime: parseFloat(document.getElementById('projectBudget').value),
+                        statutProjet: document.getElementById('projectStatus').value,
+                        niveauAvancement: parseInt(document.getElementById('projectProgress').value),
+                        institution: document.getElementById('projectInstitution').value
+                    };
+
+                    fetch('/api/projects/' + id, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updatedProject)
+                    })
+                        .then(response => {
+                            if (response.ok) return response.json();
+                            throw new Error('Erreur');
+                        })
+                        .then(data => {
+                            alert('✅ Projet modifié avec succès!');
+                            form.onsubmit = function (e) { saveProject(e); };
+                            document.querySelector('#nouveau-projet .page-header h1').textContent = '➕ Déclarer un Nouveau Projet';
+                            showPage('mes-projets', null);
+                            loadProjectsData();
+                        })
+                        .catch(error => {
+                            console.error('Erreur:', error);
+                            alert('Erreur lors de la modification du projet');
+                        });
+                };
+            }
+
+            function deleteProject(id) {
+                if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
+                    fetch('/api/projects/' + id, { method: 'DELETE' })
+                        .then(response => {
+                            if (response.ok) {
+                                mesProjets = mesProjets.filter(p => p.id !== id);
+                                updateStats();
+                                displayProjects();
+                                alert('✅ Projet supprimé avec succès!');
+                            } else {
+                                throw new Error('Erreur lors de la suppression');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erreur:', error);
+                            alert('Erreur lors de la suppression du projet');
+                        });
+                }
+            }
+
+            function updateProfile(event) {
+                event.preventDefault();
+
+                const profileData = {
+                    nom: document.getElementById('editNom').value,
+                    institution: document.getElementById('editInstitution').value
+                };
+
+                fetch('/api/users/me', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(profileData)
+                })
+                    .then(response => {
+                        if (response.ok) return response.json();
+                        throw new Error('Erreur');
+                    })
+                    .then(data => {
+                        alert('✅ Profil mis à jour avec succès!');
+                        // Mettre à jour l'affichage
+                        document.getElementById('userNom').textContent = data.nom || 'Candidat';
+                        document.getElementById('userInstitution').textContent = data.institution || '-';
+                        document.getElementById('profileNom').textContent = data.nom || 'Candidat';
+                        document.getElementById('profileInstitution').textContent = data.institution || '-';
+
+                        // Mettre à jour le localStorage
+                        const userStr = localStorage.getItem('user');
+                        if (userStr) {
+                            try {
+                                const user = JSON.parse(userStr);
+                                user.nom = data.nom;
+                                user.institution = data.institution;
+                                localStorage.setItem('user', JSON.stringify(user));
+                            } catch (e) { }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        alert('Erreur lors de la mise à jour du profil');
+                    });
+            }
+
+            function changePassword() {
+                const newPassword = prompt('Entrez votre nouveau mot de passe:');
+                if (newPassword && newPassword.length >= 6) {
+                    alert('Fonctionnalité de changement de mot de passe à implémenter côté serveur.');
+                } else if (newPassword) {
+                    alert('Le mot de passe doit contenir au moins 6 caractères.');
+                }
+            }
+
             function initCharts() {
+                // Détruire les anciens graphiques
+                Object.values(charts).forEach(chart => {
+                    if (chart) chart.destroy();
+                });
+                charts = {};
+
                 const ctxStatus = document.getElementById('statusChart');
                 if (ctxStatus) {
                     const enCours = mesProjets.filter(p => p.statut === 'EN_COURS').length;
                     const termine = mesProjets.filter(p => p.statut === 'TERMINE').length;
+                    const suspendu = mesProjets.filter(p => p.statut === 'SUSPENDU').length;
 
-                    charts.status = new Chart(ctxStatus, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['En Cours', 'Terminé'],
-                            datasets: [{
-                                data: [enCours, termine],
-                                backgroundColor: [
-                                    '#28a745',
-                                    '#007bff'
-                                ]
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom'
+                    const labels = [];
+                    const data = [];
+
+                    if (enCours > 0) { labels.push('En Cours'); data.push(enCours); }
+                    if (termine > 0) { labels.push('Terminé'); data.push(termine); }
+                    if (suspendu > 0) { labels.push('Suspendu'); data.push(suspendu); }
+
+                    if (data.length > 0) {
+                        charts.status = new Chart(ctxStatus, {
+                            type: 'doughnut',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    data: data,
+                                    backgroundColor: ['#28a745', '#007bff', '#dc3545']
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom'
+                                    }
                                 }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
 
                 const ctxProgress = document.getElementById('progressChart');
-                if (ctxProgress) {
+                if (ctxProgress && mesProjets.length > 0) {
                     charts.progress = new Chart(ctxProgress, {
                         type: 'bar',
                         data: {
