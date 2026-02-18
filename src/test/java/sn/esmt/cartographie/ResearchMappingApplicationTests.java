@@ -7,8 +7,8 @@ import sn.esmt.cartographie.security.CustomOAuth2UserService;
 
 @SpringBootTest(
     properties = {
-        "spring.security.oauth2.client.registration.google.client-id=test-client-id",
-        "spring.security.oauth2.client.registration.google.client-secret=test-client-secret",
+        "spring.security.oauth2.client.registration.google.client-id=invalid-test-client-id",
+        "spring.security.oauth2.client.registration.google.client-secret=invalid-test-client-secret",
         "spring.security.oauth2.client.registration.google.scope=openid,profile,email"
     }
 )
