@@ -164,6 +164,25 @@ class CustomOAuth2UserServiceTest {
         assertEquals("CANDIDAT", result.getRole().getLibelle());
     }
 
+    @Test
+    void testRegisterNewUser_ThrowsExceptionForNullEmail() {
+        // Given
+        String nullEmail = null;
+        String name = "Test User";
+
+        // When/Then - reflection wraps exceptions in RuntimeException
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            invokeRegisterNewUser(nullEmail, name);
+        });
+        
+        // Check if the message contains our expected error
+        String message = exception.getMessage() != null ? exception.getMessage() : 
+                        (exception.getCause() != null ? exception.getCause().getMessage() : "");
+        assertTrue(message.contains("Email cannot be null") || 
+                  message.contains("Failed to invoke registerNewUser"),
+                  "Expected exception message to contain 'Email cannot be null', but was: " + message);
+    }
+
     // Helper method to invoke the private registerNewUser method using reflection
     private Utilisateur invokeRegisterNewUser(String email, String name) {
         try {

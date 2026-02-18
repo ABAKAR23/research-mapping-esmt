@@ -43,6 +43,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private Utilisateur registerNewUser(String email, String name) {
+        if (email == null) {
+            throw new IllegalArgumentException("Email cannot be null");
+        }
+        
         Utilisateur user = new Utilisateur();
         user.setEmail(email);
         user.setNom(name);
@@ -68,6 +72,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     // Helper methods to determine role based on email
+    // TODO: Consider moving admin/manager emails to application.properties for better security and configuration management
     private boolean isAdminEmail(String email) {
         // Admin emails: admin@esmt.sn or configured admin emails
         return email.equals("admin@esmt.sn") || 
