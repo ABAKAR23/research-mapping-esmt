@@ -65,11 +65,29 @@ class PageControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "test@example.com")
+    @WithMockUser(username = "test@example.com", roles = "ADMIN")
     void testDashboardPageWithAuthenticatedUser() throws Exception {
         // Authenticated user should be able to access dashboard
         mockMvc.perform(get("/dashboard"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("dashboard"));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testCandidatPageWithAnonymousUser() throws Exception {
+        // Anonymous user should be able to access candidat page (client-side validation)
+        mockMvc.perform(get("/candidat"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("dashboard-candidat"));
+    }
+
+    @Test
+    @WithMockUser(username = "candidat@example.com", roles = "CANDIDAT")
+    void testCandidatPageWithAuthenticatedCandidat() throws Exception {
+        // Authenticated candidat should be able to access candidat page
+        mockMvc.perform(get("/candidat"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("dashboard-candidat"));
     }
 }

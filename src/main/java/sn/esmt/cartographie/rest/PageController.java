@@ -15,7 +15,7 @@ public class PageController {
         if (isAuthenticated(authentication)) {
             return "redirect:/dashboard";
         }
-        return "login"; // Assuming login.jsp exists and is mapped to this view name
+        return "redirect:/login";
     }
 
     @GetMapping("/login")
@@ -28,6 +28,8 @@ public class PageController {
 
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
+        // Route accessible via permitAll() - la vérification JWT se fait côté client
+        // Cette vérification serveur basique redirige si Spring Security détecte un utilisateur non authentifié
         if (!isAuthenticated(authentication)) {
             return "redirect:/login";
         }
@@ -46,6 +48,13 @@ public class PageController {
             // Fallback
             return "dashboard-candidat";
         }
+    }
+
+    @GetMapping("/candidat")
+    public String candidat(Authentication authentication) {
+        // Route accessible via permitAll() - la vérification JWT se fait côté client dans dashboard-candidat.jsp
+        // Cela évite les boucles de redirection tout en permettant la validation JavaScript
+        return "dashboard-candidat";
     }
 
     private boolean isAuthenticated(Authentication authentication) {
