@@ -13,7 +13,7 @@ import sn.esmt.cartographie.service.StatistiqueService;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/statistics")
+@RequestMapping("/api/statistics")
 @Tag(name = "Statistics", description = "API des statistiques des projets")
 @SecurityRequirement(name = "bearer-jwt")
 public class StatisticsController {

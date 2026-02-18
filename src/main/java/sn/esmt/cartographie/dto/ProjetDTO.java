@@ -14,8 +14,10 @@ public class ProjetDTO {
     private String description;
 
     @NotNull(message = "La date de début est requise")
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd")
     private Date dateDebut;
 
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd")
     private Date dateFin;
 
     @NotBlank(message = "Le statut est requis")
@@ -31,7 +33,8 @@ public class ProjetDTO {
     private List<Long> participantIds;
     private List<String> participantNames;
 
-    public ProjetDTO() {}
+    public ProjetDTO() {
+    }
 
     // Getters and Setters
     public Long getProjectId() {

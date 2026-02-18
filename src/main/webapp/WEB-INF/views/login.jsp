@@ -104,6 +104,11 @@
             transform: translateY(-2px);
         }
 
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .error {
             color: #e74c3c;
             font-size: 0.9em;
@@ -171,6 +176,27 @@
         .link a:hover {
             text-decoration: underline;
         }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -189,15 +215,20 @@
         <form onsubmit="handleLogin(event)">
             <div class="form-group">
                 <label for="email">👤 Email</label>
-                <input type="email" id="email" name="email" required placeholder="Entrez votre email">
+                <input type="email" id="email" name="email" required placeholder="Entrez votre email" autocomplete="email">
             </div>
 
             <div class="form-group">
                 <label for="password">🔐 Mot de passe</label>
-                <input type="password" id="password" name="password" required placeholder="Entrez votre mot de passe">
+                <input type="password" id="password" name="password" required placeholder="Entrez votre mot de passe" autocomplete="current-password">
             </div>
 
-            <button type="submit">Se Connecter</button>
+            <button type="submit" id="submitBtn">Se Connecter</button>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="color: #667eea; margin-top: 10px; font-size: 12px;">Connexion en cours...</p>
+            </div>
         </form>
 
         <div class="divider">OU</div>
@@ -212,9 +243,22 @@
         <div class="link">
             Pas de compte? <a href="/register.jsp">S'inscrire</a>
         </div>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #999;">
+            <strong>🧪 Comptes de démonstration :</strong>
+            <p style="margin-top: 8px;">
+                <strong>Admin :</strong> admin@esmt.sn / admin123<br>
+                <strong>Candidat :</strong> candidat@esmt.sn / candidat123<br>
+                <strong>Gestionnaire :</strong> gestionnaire@esmt.sn / gestionnaire123
+            </p>
+        </div>
     </div>
 
     <script>
+        // ✅ NE PAS rediriger au chargement de la page login
+        // Cette page doit TOUJOURS afficher le formulaire
+        // C'est le dashboard qui vérifie le token et redirige
+
         function handleLogin(event) {
             event.preventDefault();
 
@@ -222,9 +266,15 @@
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('error');
             const successDiv = document.getElementById('success');
+            const loading = document.getElementById('loading');
+            const submitBtn = document.getElementById('submitBtn');
 
             errorDiv.style.display = 'none';
             successDiv.style.display = 'none';
+            loading.style.display = 'block';
+            submitBtn.disabled = true;
+
+            console.log('📝 Tentative de connexion avec:', email);
 
             fetch('/api/auth/login', {
                 method: 'POST',
@@ -237,6 +287,7 @@
                 })
             })
             .then(response => {
+                console.log('📡 Réponse du serveur:', response.status);
                 if (!response.ok) {
                     return response.json().then(data => {
                         throw new Error(data.message || 'Erreur serveur');
@@ -245,23 +296,41 @@
                 return response.json();
             })
             .then(data => {
-                if (data.token) {
+                console.log('✅ Données reçues:', data);
+
+                if (data.token && data.role) {
+                    console.log('🔐 Token reçu, Rôle:', data.role);
+
+                    // Sauvegarder le token et les infos utilisateur
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data));
+
                     successDiv.textContent = '✅ Connexion réussie! Redirection...';
                     successDiv.style.display = 'block';
+
+                    // ✅ Rediriger selon le rôle
                     setTimeout(() => {
-                        window.location.href = '/dashboard';
+                        if (data.role.toUpperCase() === 'ADMIN' || data.role.toUpperCase() === 'GESTIONNAIRE') {
+                            console.log('→ Redirection vers /dashboard');
+                            window.location.href = '/dashboard';
+                        } else {
+                            console.log('→ Redirection vers /candidat');
+                            window.location.href = '/candidat';
+                        }
                     }, 1500);
                 } else {
                     errorDiv.textContent = '❌ ' + (data.message || 'Identifiants incorrects');
                     errorDiv.style.display = 'block';
+                    loading.style.display = 'none';
+                    submitBtn.disabled = false;
                 }
             })
             .catch(error => {
+                console.error('❌ Erreur:', error);
                 errorDiv.textContent = '❌ ' + error.message;
                 errorDiv.style.display = 'block';
-                console.error('Erreur:', error);
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
             });
         }
     </script>
