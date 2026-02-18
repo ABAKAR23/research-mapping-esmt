@@ -1,5 +1,7 @@
 package sn.esmt.cartographie.rest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -10,27 +12,32 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class PageController {
 
+    private static final Logger logger = LoggerFactory.getLogger(PageController.class);
+
     @GetMapping("/")
     public String index(Authentication authentication) {
-        if (isAuthenticated(authentication)) {
-            return "redirect:/dashboard";
-        }
-        return "redirect:/login";
-    }
-
-    @GetMapping("/login")
-    public String login(Authentication authentication) {
+        logger.debug("Accessing index. Authenticated: {}", isAuthenticated(authentication));
         if (isAuthenticated(authentication)) {
             return "redirect:/dashboard";
         }
         return "login";
     }
 
+    @GetMapping("/login")
+    public String login(Authentication authentication) {
+        logger.debug("Accessing login. Authenticated: {}", isAuthenticated(authentication));
+        // ✅ NE PLUS rediriger automatiquement - juste afficher la page
+        // La redirection se fait uniquement après connexion réussie
+        return "login";
+    }
+
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
-        // Route accessible via permitAll() - la vérification JWT se fait côté client
-        // Cette vérification serveur basique redirige si Spring Security détecte un utilisateur non authentifié
+        logger.debug("Accessing dashboard. Authenticated: {}", isAuthenticated(authentication));
+
+        // ✅ Permettre l'accès initial, la vérification se fait côté client avec JWT
         if (!isAuthenticated(authentication)) {
+            logger.debug("User not authenticated, redirecting to login");
             return "redirect:/login";
         }
 
@@ -39,6 +46,8 @@ public class PageController {
                 .map(GrantedAuthority::getAuthority)
                 .findFirst()
                 .orElse("");
+
+        logger.debug("User role: {}", role);
 
         if (role.equals("ROLE_CANDIDAT")) {
             return "dashboard-candidat";
@@ -52,8 +61,8 @@ public class PageController {
 
     @GetMapping("/candidat")
     public String candidat(Authentication authentication) {
-        // Route accessible via permitAll() - la vérification JWT se fait côté client dans dashboard-candidat.jsp
-        // Cela évite les boucles de redirection tout en permettant la validation JavaScript
+        logger.debug("Accessing candidat dashboard. Authenticated: {}", isAuthenticated(authentication));
+        // ✅ Route directe pour les candidats
         return "dashboard-candidat";
     }
 

@@ -15,37 +15,36 @@ import sn.esmt.cartographie.security.CustomOAuth2UserService;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-        @Autowired
-        private CustomOAuth2UserService customOAuth2UserService;
+    @Autowired
+    private CustomOAuth2UserService customOAuth2UserService;
 
-        @Bean
-        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-                http
-                                .csrf(csrf -> csrf.disable()) // Disable CSRF for simplicity in this project (as per
-                                                              // requirements often
-                                                              // implies simpler setup)
-                                .authorizeHttpRequests(authz -> authz
-                                                .requestMatchers("/", "/login", "/dashboard", "/candidat", "/api/auth/**", "/css/**", "/js/**",
-                                                                "/images/**",
-                                                                "/webjars/**")
-                                                .permitAll()
-                                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                                                .requestMatchers("/api/manager/**", "/import", "/import-csv")
-                                                .hasAnyRole("ADMIN", "GESTIONNAIRE")
-                                                .anyRequest().authenticated())
-                                .oauth2Login(oauth2 -> oauth2
-                                                .loginPage("/login") // Custom login page (we have index.jsp acting as
-                                                                     // one or login.jsp)
-                                                .userInfoEndpoint(userInfo -> userInfo
-                                                                .userService(customOAuth2UserService))
-                                                .defaultSuccessUrl("/dashboard", true))
-                                .logout(logout -> logout
-                                                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                                                .logoutSuccessUrl("/")
-                                                .deleteCookies("JSESSIONID")
-                                                .invalidateHttpSession(true)
-                                                .clearAuthentication(true));
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable()) // Disable CSRF for simplicity in this project
+                .authorizeHttpRequests(authz -> authz
+                        // ✅ Ajouter /dashboard et /candidat ici
+                        .requestMatchers("/", "/login", "/dashboard", "/candidat",
+                                "/api/auth/**", "/css/**", "/js/**",
+                                "/images/**", "/webjars/**")
+                        .permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/manager/**", "/import", "/import-csv")
+                        .hasAnyRole("ADMIN", "GESTIONNAIRE")
+                        .anyRequest().authenticated())
+                .oauth2Login(oauth2 -> oauth2
+                        // ✅ SUPPRIMER .loginPage("/login") pour éviter le conflit
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService))
+                        .defaultSuccessUrl("/dashboard", true))
+                .formLogin(form -> form.disable()) // ✅ Désactiver form login
+                .logout(logout -> logout
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                        .logoutSuccessUrl("/")
+                        .deleteCookies("JSESSIONID")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true));
 
-                return http.build();
-        }
+        return http.build();
+    }
 }
