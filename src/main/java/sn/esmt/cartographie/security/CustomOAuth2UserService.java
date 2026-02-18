@@ -49,10 +49,34 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         user.setInstitution("ESMT"); // Default institution
         user.setMotDePasse(""); // No password for OAuth users
 
-        Role candidatRole = roleRepository.findByLibelle("CANDIDAT")
-                .orElseThrow(() -> new RuntimeException("Role CANDIDAT not found"));
-        user.setRole(candidatRole);
-
+        // Assign role based on email or other criteria
+        Role role;
+        if (isAdminEmail(email)) {
+            role = roleRepository.findByLibelle("ADMIN")
+                    .orElseThrow(() -> new RuntimeException("Role ADMIN not found"));
+        } else if (isManagerEmail(email)) {
+            role = roleRepository.findByLibelle("GESTIONNAIRE")
+                    .orElseThrow(() -> new RuntimeException("Role GESTIONNAIRE not found"));
+        } else {
+            // Default to CANDIDAT for external users
+            role = roleRepository.findByLibelle("CANDIDAT")
+                    .orElseThrow(() -> new RuntimeException("Role CANDIDAT not found"));
+        }
+        
+        user.setRole(role);
         return utilisateurRepository.save(user);
+    }
+
+    // Helper methods to determine role based on email
+    private boolean isAdminEmail(String email) {
+        // Admin emails: admin@esmt.sn or configured admin emails
+        return email.equals("admin@esmt.sn") || 
+               email.equals("saleyokor@gmail.com"); // Example: add specific admin email
+    }
+
+    private boolean isManagerEmail(String email) {
+        // Manager emails: manager@esmt.sn or emails from specific domain
+        return email.equals("manager@esmt.sn") || 
+               email.endsWith("@esmt-manager.sn");
     }
 }
