@@ -557,8 +557,8 @@
                         <div style="font-weight: 600;" id="displayNameNav">Candidat</div>
                     </div>
                 </div>
-                <!-- ✅ FIX 1: Changé le onclick pour appeler la fonction logout() -->
-                <button class="btn-logout" onclick="logout()">Se Déconnecter</button>
+                <!-- Logout button - event handler attached via JavaScript -->
+                <button class="btn-logout">Se Déconnecter</button>
             </div>
         </div>
 
@@ -807,15 +807,18 @@
             let charts = {};
             let mesProjets = [];
 
-            // ✅ DÉFINIR LA FONCTION LOGOUT AU DÉBUT
-            // ✅ DÉFINIR LA FONCTION LOGOUT AU DÉBUT
-            function logout() {
-                console.log('📤 Tentative de déconnexion...');
-                if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                    // Pour OAuth2/Session, on appelle l'endpoint de logout du serveur
-                    window.location.href = '/logout';
+            // Attach logout event listener when DOM is loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                const logoutBtn = document.querySelector('.btn-logout');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', function() {
+                        console.log('📤 Tentative de déconnexion...');
+                        if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                            window.location.href = '/logout';
+                        }
+                    });
                 }
-            }
+            });
 
             // ✅ PUIS DÉFINIR LES AUTRES FONCTIONS
             function showPage(pageId, event) {
