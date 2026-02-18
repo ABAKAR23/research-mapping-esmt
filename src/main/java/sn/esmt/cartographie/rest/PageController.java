@@ -15,7 +15,7 @@ public class PageController {
         if (isAuthenticated(authentication)) {
             return "redirect:/dashboard";
         }
-        return "login"; // Assuming login.jsp exists and is mapped to this view name
+        return "redirect:/login";
     }
 
     @GetMapping("/login")
@@ -28,7 +28,9 @@ public class PageController {
 
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
+        // Permettre l'accès initial, la vérification se fait côté client
         if (!isAuthenticated(authentication)) {
+            // Vérification basique côté serveur
             return "redirect:/login";
         }
 
@@ -46,6 +48,12 @@ public class PageController {
             // Fallback
             return "dashboard-candidat";
         }
+    }
+
+    @GetMapping("/candidat")
+    public String candidat(Authentication authentication) {
+        // Permettre l'accès initial pour les candidats
+        return "dashboard-candidat";
     }
 
     private boolean isAuthenticated(Authentication authentication) {

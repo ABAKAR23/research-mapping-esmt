@@ -25,7 +25,7 @@ public class SecurityConfig {
                                                               // requirements often
                                                               // implies simpler setup)
                                 .authorizeHttpRequests(authz -> authz
-                                                .requestMatchers("/", "/login", "/api/auth/**", "/css/**", "/js/**",
+                                                .requestMatchers("/", "/login", "/dashboard", "/candidat", "/api/auth/**", "/css/**", "/js/**",
                                                                 "/images/**",
                                                                 "/webjars/**")
                                                 .permitAll()
