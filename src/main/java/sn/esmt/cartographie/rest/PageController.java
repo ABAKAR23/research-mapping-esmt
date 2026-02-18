@@ -28,9 +28,9 @@ public class PageController {
 
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
-        // Permettre l'accès initial, la vérification se fait côté client
+        // Route accessible via permitAll() - la vérification JWT se fait côté client
+        // Cette vérification serveur basique redirige si Spring Security détecte un utilisateur non authentifié
         if (!isAuthenticated(authentication)) {
-            // Vérification basique côté serveur
             return "redirect:/login";
         }
 
@@ -52,7 +52,8 @@ public class PageController {
 
     @GetMapping("/candidat")
     public String candidat(Authentication authentication) {
-        // Permettre l'accès initial pour les candidats
+        // Route accessible via permitAll() - la vérification JWT se fait côté client dans dashboard-candidat.jsp
+        // Cela évite les boucles de redirection tout en permettant la validation JavaScript
         return "dashboard-candidat";
     }
 
