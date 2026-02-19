@@ -49,9 +49,8 @@
             transition: background 0.3s;
         }
         button:hover { background: #5a67d8; }
-        button:disabled { background: #a0aec0; cursor: not-allowed; }
-        .error { color: #e53e3e; background: #fff5f5; padding: 10px; border-radius: 5px; margin-bottom: 20px; display: none; text-align: center; }
-        .success { color: #38a169; background: #f0fff4; padding: 10px; border-radius: 5px; margin-bottom: 20px; display: none; text-align: center; }
+        .error { color: #e53e3e; background: #fff5f5; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center; }
+        .success { color: #38a169; background: #f0fff4; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center; }
     </style>
 </head>
 <body>
@@ -61,68 +60,25 @@
             <p>Cartographie de la Recherche</p>
         </div>
 
-        <div id="errorMsg" class="error"></div>
-        <div id="successMsg" class="success"></div>
+        <% if (request.getParameter("error") != null) { %>
+            <div class="error">Identifiants incorrects. Veuillez réessayer.</div>
+        <% } %>
+        
+        <% if (request.getParameter("logout") != null) { %>
+            <div class="success">Vous avez été déconnecté avec succès.</div>
+        <% } %>
 
-        <form id="loginForm" onsubmit="handleLogin(event)">
+        <form method="post" action="/login">
             <div class="form-group">
-                <label for="email">Email professionnel</label>
-                <input type="email" id="email" required placeholder="votre.nom@esmt.sn">
+                <label for="username">Email professionnel</label>
+                <input type="email" id="username" name="username" required placeholder="votre.nom@esmt.sn">
             </div>
             <div class="form-group">
                 <label for="password">Mot de passe</label>
-                <input type="password" id="password" required placeholder="••••••••">
+                <input type="password" id="password" name="password" required placeholder="••••••••">
             </div>
-            <button type="submit" id="submitBtn">Se connecter</button>
+            <button type="submit">Se connecter</button>
         </form>
     </div>
-
-    <script>
-        function handleLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const errorDiv = document.getElementById('errorMsg');
-            const successDiv = document.getElementById('successMsg');
-            const btn = document.getElementById('submitBtn');
-
-            errorDiv.style.display = 'none';
-            btn.disabled = true;
-
-            fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            })
-            .then(async response => {
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.message || 'Identifiants incorrects');
-                return data;
-            })
-            .then(data => {
-                // 1. Stockage pour les futurs appels API
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data));
-
-                successDiv.textContent = 'Connexion réussie...';
-                successDiv.style.display = 'block';
-
-                // 2. Redirection basée sur le rôle renvoyé par le serveur
-                setTimeout(() => {
-                    const role = data.role.toUpperCase();
-                    if (role === 'ADMIN' || role === 'GESTIONNAIRE') {
-                        window.location.href = '/dashboard';
-                    } else {
-                        window.location.href = '/candidat';
-                    }
-                }, 1000);
-            })
-            .catch(error => {
-                errorDiv.textContent = error.message;
-                errorDiv.style.display = 'block';
-                btn.disabled = false;
-            });
-        }
-    </script>
 </body>
 </html>

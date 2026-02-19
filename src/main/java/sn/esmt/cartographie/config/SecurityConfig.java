@@ -1,6 +1,5 @@
 package sn.esmt.cartographie.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -8,15 +7,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import sn.esmt.cartographie.security.CustomOAuth2UserService;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-
-        @Autowired
-        private CustomOAuth2UserService customOAuth2UserService;
 
         @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -42,17 +37,19 @@ public class SecurityConfig {
                                                 .hasAnyRole("ADMIN", "GESTIONNAIRE")
                                                 // Tout le reste nécessite une authentification
                                                 .anyRequest().authenticated())
-                                .oauth2Login(oauth2 -> oauth2
-                                                .userInfoEndpoint(userInfo -> userInfo
-                                                                .userService(customOAuth2UserService))
-                                                .defaultSuccessUrl("/dashboard", true))
-                                .formLogin(form -> form.disable())
+                                .formLogin(form -> form
+                                                .loginPage("/login")
+                                                .loginProcessingUrl("/login")
+                                                .defaultSuccessUrl("/dashboard", true)
+                                                .failureUrl("/login?error=true")
+                                                .permitAll())
                                 .logout(logout -> logout
                                                 .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                                                .logoutSuccessUrl("/")
+                                                .logoutSuccessUrl("/login?logout=true")
                                                 .deleteCookies("JSESSIONID")
                                                 .invalidateHttpSession(true)
-                                                .clearAuthentication(true));
+                                                .clearAuthentication(true)
+                                                .permitAll());
 
                 return http.build();
         }
