@@ -8,8 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import sn.esmt.cartographie.dto.ProjetDTO;
 import sn.esmt.cartographie.service.ProjetService;
@@ -28,8 +27,8 @@ public class ProjectController {
     @GetMapping
     @Operation(summary = "Obtenir tous les projets visibles par l'utilisateur connecté")
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTIONNAIRE', 'CANDIDAT')")
-    public ResponseEntity<List<ProjetDTO>> getAllProjects(@AuthenticationPrincipal OAuth2User principal) {
-        String email = principal.getAttribute("email");
+    public ResponseEntity<List<ProjetDTO>> getAllProjects(Authentication authentication) {
+        String email = authentication.getName();
         return ResponseEntity.ok(projetService.getMyProjects(email));
     }
 
@@ -38,8 +37,8 @@ public class ProjectController {
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTIONNAIRE', 'CANDIDAT')")
     public ResponseEntity<ProjetDTO> getProjectById(
             @PathVariable Long id,
-            @AuthenticationPrincipal OAuth2User principal) {
-        String email = principal.getAttribute("email");
+            Authentication authentication) {
+        String email = authentication.getName();
         return ResponseEntity.ok(projetService.getProjetByIdSecured(id, email));
     }
 
@@ -48,8 +47,8 @@ public class ProjectController {
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTIONNAIRE', 'CANDIDAT')")
     public ResponseEntity<ProjetDTO> createProject(
             @Valid @RequestBody ProjetDTO projetDTO,
-            @AuthenticationPrincipal OAuth2User principal) {
-        String email = principal.getAttribute("email");
+            Authentication authentication) {
+        String email = authentication.getName();
         ProjetDTO created = projetService.createProjet(projetDTO, email);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
@@ -60,8 +59,8 @@ public class ProjectController {
     public ResponseEntity<ProjetDTO> updateProject(
             @PathVariable Long id,
             @Valid @RequestBody ProjetDTO projetDTO,
-            @AuthenticationPrincipal OAuth2User principal) {
-        String email = principal.getAttribute("email");
+            Authentication authentication) {
+        String email = authentication.getName();
         ProjetDTO updated = projetService.updateProjet(id, projetDTO, email);
         return ResponseEntity.ok(updated);
     }
@@ -71,8 +70,8 @@ public class ProjectController {
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTIONNAIRE', 'CANDIDAT')")
     public ResponseEntity<Void> deleteProject(
             @PathVariable Long id,
-            @AuthenticationPrincipal OAuth2User principal) {
-        String email = principal.getAttribute("email");
+            Authentication authentication) {
+        String email = authentication.getName();
         projetService.deleteProjet(id, email);
         return ResponseEntity.noContent().build();
     }
