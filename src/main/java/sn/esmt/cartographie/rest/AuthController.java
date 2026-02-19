@@ -3,20 +3,20 @@ package sn.esmt.cartographie.rest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import sn.esmt.cartographie.dto.LoginRequest;
-import sn.esmt.cartographie.dto.TokenResponse;
-import sn.esmt.cartographie.service.AuthenticationService;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.web.bind.annotation.*;
+import sn.esmt.cartographie.dto.LoginRequest;
+import sn.esmt.cartographie.dto.TokenResponse;
+import sn.esmt.cartographie.service.AuthenticationService;
+
 import java.util.Collections;
 
 @RestController
@@ -32,20 +32,11 @@ public class AuthController {
     public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest loginRequest,
                                                HttpServletRequest request) {
 
+        // Authentification via le service (génère le JWT)
         TokenResponse response = authenticationService.login(loginRequest);
 
-        // Nettoyer toute session existante
-        HttpSession oldSession = request.getSession(false);
-        if (oldSession != null) {
-            oldSession.invalidate();
-        }
-
-        // Créer une nouvelle session
-        HttpSession session = request.getSession(true);
-
-        // Configurer l'authentification Spring Security
+        // CORRECTION : Synchronisation manuelle de la session Spring Security pour les JSP
         String role = "ROLE_" + response.getRole().toUpperCase();
-
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 response.getEmail(),
                 null,
@@ -55,16 +46,15 @@ public class AuthController {
         sc.setAuthentication(auth);
         SecurityContextHolder.setContext(sc);
 
-        // Sauvegarder dans la session
+        // Persistance forcée en session pour que PageController reconnaisse l'utilisateur
+        HttpSession session = request.getSession(true);
         session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, sc);
         session.setAttribute("user", response);
-        session.setMaxInactiveInterval(3600); // 1 heure
 
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "Déconnexion")
     public ResponseEntity<?> logout(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session != null) {
@@ -72,16 +62,5 @@ public class AuthController {
         }
         SecurityContextHolder.clearContext();
         return ResponseEntity.ok().body("Déconnecté avec succès");
-    }
-
-    @GetMapping("/validate")
-    @Operation(summary = "Valider un token JWT")
-    public ResponseEntity<String> validateToken(@RequestHeader("Authorization") String token) {
-        if (token != null && token.startsWith("Bearer ")) {
-            String jwt = token.substring(7);
-            authenticationService.validateToken(jwt);
-            return ResponseEntity.ok("Token valide");
-        }
-        return ResponseEntity.status(401).body("Token invalide");
     }
 }
