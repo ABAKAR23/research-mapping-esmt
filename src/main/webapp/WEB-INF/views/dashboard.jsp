@@ -8,7 +8,6 @@
     <title>Tableau de Bord - ESMT Research Mapping</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- TON STYLE ORIGINAL (sidebar, navbar, stats-grid, etc.) --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; }
         .navbar {
@@ -34,30 +33,53 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 2000; justify-content: center; align-items: center; }
         .modal-overlay.show { display: flex; }
         .modal { background: white; border-radius: 10px; padding: 30px; width: 500px; max-width: 90%; }
-        /* ... Tes autres styles de badges et boutons ... */
+
+        /* Petits styles manquants dans ton extrait */
+        .user-info { display:flex; align-items:center; gap:12px; }
+        .user-avatar {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: rgba(255,255,255,0.25);
+            display:flex; align-items:center; justify-content:center;
+            font-weight:700;
+        }
+        .page-header { margin-bottom: 18px; }
+        .page-header h1 { margin-bottom: 6px; }
+        .label { opacity: 0.9; font-size: 13px; }
+        .value { font-size: 28px; font-weight: 800; margin-top: 6px; }
     </style>
 
     <script>
         let charts = {};
 
-        // INITIALISATION AU CHARGEMENT
+        // INITIALISATION AU CHARGEMENT (CORRIGÉ)
+        // - On ne dépend plus de localStorage pour décider si l'utilisateur est connecté.
+        // - Spring Security protège déjà /dashboard : si non connecté => redirect /login
         document.addEventListener('DOMContentLoaded', () => {
-            const userStr = localStorage.getItem('user');
-            if (!userStr) {
-                window.location.href = '/login';
-                return;
-            }
-            const user = JSON.parse(userStr);
+            // Optionnel: si tu as encore des restes JWT dans localStorage, on ne les utilise plus ici.
+            // localStorage.removeItem('token'); // (optionnel)
 
-            // Remplissage des infos utilisateur (ton design original)
-            document.getElementById('displayNameNav').textContent = user.nom;
-            document.getElementById('userAvatarNav').textContent = user.nom.charAt(0);
-            document.getElementById('userEmail').textContent = user.email;
-            document.getElementById('userRole').textContent = user.role;
+            // Valeurs par défaut (évite erreurs JS)
+            setUserHeader({
+                nom: "Utilisateur",
+                email: "",
+                role: ""
+            });
 
             // Charger les données initiales
             loadDashboardStats();
         });
+
+        function setUserHeader(user) {
+            const displayNameNav = document.getElementById('displayNameNav');
+            const userAvatarNav = document.getElementById('userAvatarNav');
+            const userEmail = document.getElementById('userEmail');
+            const userRole = document.getElementById('userRole');
+
+            if (displayNameNav) displayNameNav.textContent = user.nom || "Utilisateur";
+            if (userAvatarNav) userAvatarNav.textContent = (user.nom && user.nom.length > 0) ? user.nom.charAt(0).toUpperCase() : "U";
+            if (userEmail) userEmail.textContent = user.email || "";
+            if (userRole) userRole.textContent = user.role || "";
+        }
 
         function showPage(pageId, event) {
             if (event) event.preventDefault();
@@ -70,21 +92,18 @@
             }
         }
 
-        // CORRECTION DU LOGOUT
+        // LOGOUT (CORRIGÉ pour Spring Security formLogin)
+        // Ton SecurityConfig utilise /logout
         function logout() {
             if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                fetch('/api/auth/logout', { method: 'POST' })
-                .finally(() => {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    window.location.href = '/login?logout';
-                });
+                window.location.href = '/logout';
             }
         }
 
         function loadDashboardStats() {
-            // Ici tu feras tes appels fetch('/api/stats') avec le token
-            console.log("Chargement des stats avec le token : " + localStorage.getItem('token'));
+            // Ici tu peux faire des fetch vers tes endpoints.
+            // Comme tu es en session (JSESSIONID), pas besoin de token.
+            console.log("Dashboard chargé (auth gérée par session Spring Security).");
         }
 
         function closeModal(id) {
@@ -106,10 +125,10 @@
         <div class="navbar-brand"><span>🔬</span> ESMT Research Mapping</div>
         <div class="navbar-right">
             <div class="user-info">
-                <div class="user-avatar" id="userAvatarNav">?</div>
+                <div class="user-avatar" id="userAvatarNav">U</div>
                 <div>
                     <div style="font-size: 14px;">Bienvenue,</div>
-                    <div style="font-weight: 600;" id="displayNameNav">...</div>
+                    <div style="font-weight: 600;" id="displayNameNav">Utilisateur</div>
                 </div>
             </div>
             <button class="btn-logout" onclick="logout()">Se Déconnecter</button>
@@ -133,14 +152,25 @@
                     <h1>🎯 Tableau de Bord Principal</h1>
                     <p>Vue d'ensemble de votre plateforme</p>
                 </div>
+
                 <div class="stats-grid">
-                    <div class="stat-card"><div class="label">Total Projets</div><div class="value" id="totalProjects">12</div></div>
-                    <div class="stat-card"><div class="label">Domaines</div><div class="value" id="totalDomains">5</div></div>
-                    <div class="stat-card"><div class="label">Utilisateurs</div><div class="value">24</div></div>
+                    <div class="stat-card">
+                        <div class="label">Total Projets</div>
+                        <div class="value" id="totalProjects">12</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Domaines</div>
+                        <div class="value" id="totalDomains">5</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Utilisateurs</div>
+                        <div class="value">24</div>
+                    </div>
                 </div>
+
                 <div class="header-info" style="background: white; padding: 20px; border-radius: 10px; border-left: 5px solid #667eea;">
-                    <p><strong>📧 Email :</strong> <span id="userEmail">...</span></p>
-                    <p><strong>👤 Rôle :</strong> <span id="userRole">...</span></p>
+                    <p><strong>📧 Email :</strong> <span id="userEmail"></span></p>
+                    <p><strong>👤 Rôle :</strong> <span id="userRole"></span></p>
                 </div>
             </div>
 
@@ -149,7 +179,22 @@
                 <button class="btn-logout" style="background:#667eea" onclick="showDomainModal()">+ Nouveau Domaine</button>
             </div>
 
+            <!-- Pages placeholders (évite erreurs quand on clique) -->
+            <div id="projects" class="page">
+                <div class="page-header"><h1>📁 Projets</h1></div>
+                <p>Page Projets (à implémenter).</p>
             </div>
+
+            <div id="users" class="page">
+                <div class="page-header"><h1>👥 Utilisateurs</h1></div>
+                <p>Page Utilisateurs (à implémenter).</p>
+            </div>
+
+            <div id="statistics" class="page">
+                <div class="page-header"><h1>📈 Statistiques</h1></div>
+                <p>Page Statistiques (à implémenter).</p>
+            </div>
+        </div>
     </div>
 
     <div id="domainModal" class="modal-overlay">
