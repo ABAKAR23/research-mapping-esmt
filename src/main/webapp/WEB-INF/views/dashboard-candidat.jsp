@@ -952,7 +952,7 @@
             function loadProjectsData() {
                 const token = localStorage.getItem('token');
 
-                fetch('/api/projects', {
+                fetch('/api/projects/mes-projets', {
                     headers: {
                         'Authorization': 'Bearer ' + token
                     }
