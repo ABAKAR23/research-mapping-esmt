@@ -1,0 +1,396 @@
+/**
+ * Responsive Design for ESMT Research Mapping Platform
+ * Mobile-first approach with breakpoints for tablet and desktop
+ */
+
+/* ==================== BASE RESPONSIVE UTILITIES ==================== */
+
+.hide-mobile {
+    display: none;
+}
+
+.show-mobile {
+    display: block;
+}
+
+.hide-tablet {
+    display: block;
+}
+
+.hide-desktop {
+    display: block;
+}
+
+/* ==================== TABLET (768px - 1024px) ==================== */
+@media (min-width: 768px) {
+    .hide-mobile {
+        display: block;
+    }
+    
+    .show-mobile {
+        display: none;
+    }
+    
+    .hide-tablet {
+        display: none;
+    }
+    
+    /* Navbar adjustments */
+    .navbar {
+        padding: 0 30px;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+        width: 250px;
+    }
+    
+    /* Stats grid - 2 columns */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Charts grid - 2 columns */
+    .charts-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Table wrapper */
+    .table-wrapper {
+        overflow-x: auto;
+    }
+    
+    /* Form grid */
+    .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ==================== DESKTOP (1024px+) ==================== */
+@media (min-width: 1024px) {
+    .hide-desktop {
+        display: none;
+    }
+    
+    /* Stats grid - 4 columns */
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    /* Charts grid - 2x2 */
+    .charts-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Form grid - full 2 columns */
+    .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ==================== MOBILE ONLY (<768px) ==================== */
+@media (max-width: 767px) {
+    /* Navbar mobile */
+    .navbar {
+        padding: 0 15px;
+        height: 60px;
+    }
+    
+    .navbar-brand {
+        font-size: 18px;
+    }
+    
+    .navbar-brand span {
+        font-size: 22px;
+    }
+    
+    .navbar-right {
+        gap: 10px;
+    }
+    
+    .user-name {
+        display: none;
+    }
+    
+    /* Mobile sidebar - collapsible */
+    .sidebar {
+        position: fixed;
+        left: -250px;
+        width: 250px;
+        height: 100vh;
+        top: 60px;
+        transition: left 0.3s ease;
+        z-index: 999;
+        overflow-y: auto;
+    }
+    
+    .sidebar.active {
+        left: 0;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Mobile overlay */
+    .sidebar-overlay {
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        z-index: 998;
+    }
+    
+    .sidebar-overlay.active {
+        display: block;
+    }
+    
+    /* Mobile menu toggle button */
+    .mobile-menu-toggle {
+        display: block;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 5px;
+    }
+    
+    /* Main container mobile */
+    .main-container {
+        flex-direction: column;
+    }
+    
+    .content {
+        padding: 15px;
+        width: 100%;
+    }
+    
+    /* Stats grid mobile - 1 column */
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .stat-card {
+        padding: 15px;
+    }
+    
+    /* Charts grid mobile - 1 column */
+    .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+    
+    /* Tables mobile - horizontal scroll */
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .table {
+        min-width: 700px;
+    }
+    
+    /* Forms mobile */
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    /* Buttons mobile */
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    /* Cards mobile */
+    .card {
+        margin-bottom: 15px;
+    }
+    
+    .card-body {
+        padding: 15px;
+    }
+    
+    /* Modal mobile */
+    .modal-dialog {
+        margin: 10px;
+    }
+    
+    /* Hide long text on mobile */
+    .truncate-mobile {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Stack filters on mobile */
+    .filters-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .filter-item {
+        width: 100%;
+    }
+    
+    /* Welcome section mobile */
+    .welcome-section h2 {
+        font-size: 22px;
+    }
+    
+    /* Project detail mobile */
+    .project-detail-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* User list mobile */
+    .user-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    /* Action buttons mobile */
+    .action-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+        margin: 5px 0;
+    }
+}
+
+/* ==================== LARGE DESKTOP (1440px+) ==================== */
+@media (min-width: 1440px) {
+    .container-xl {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .content {
+        max-width: 1600px;
+    }
+    
+    /* Stats grid - can show more columns */
+    .stats-grid.extended {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+/* ==================== PRINT STYLES ==================== */
+@media print {
+    .navbar,
+    .sidebar,
+    .btn,
+    .btn-logout,
+    .mobile-menu-toggle,
+    .action-buttons,
+    .filters-container {
+        display: none !important;
+    }
+    
+    .content {
+        width: 100%;
+        padding: 0;
+    }
+    
+    .card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    
+    body {
+        background: white;
+    }
+}
+
+/* ==================== LANDSCAPE MODE MOBILE ==================== */
+@media (max-width: 767px) and (orientation: landscape) {
+    .navbar {
+        height: 50px;
+    }
+    
+    .sidebar {
+        top: 50px;
+    }
+    
+    .sidebar-overlay {
+        top: 50px;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+}
+
+/* ==================== TOUCH DEVICE OPTIMIZATIONS ==================== */
+@media (hover: none) and (pointer: coarse) {
+    /* Increase touch targets */
+    .btn,
+    a,
+    button {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Better spacing for touch */
+    .nav-menu li {
+        margin: 15px 0;
+    }
+    
+    /* Remove hover effects on touch devices */
+    .btn:hover,
+    .nav-menu a:hover {
+        transform: none;
+    }
+}
+
+/* ==================== HIGH CONTRAST MODE ==================== */
+@media (prefers-contrast: high) {
+    body {
+        background: white;
+        color: black;
+    }
+    
+    .card,
+    .stat-card {
+        border: 2px solid black;
+    }
+    
+    .btn {
+        border: 2px solid currentColor;
+    }
+}
+
+/* ==================== REDUCED MOTION ==================== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ==================== DARK MODE SUPPORT ==================== */
+@media (prefers-color-scheme: dark) {
+    /* Dark mode can be implemented if needed */
+    /* Currently keeping light theme for consistency with ESMT branding */
+}

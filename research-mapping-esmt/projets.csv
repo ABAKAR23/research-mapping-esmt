@@ -1,0 +1,8 @@
+Titre,Description,DateDebut,DateFin,Statut,Budget,Institution,Avancement,Domaine,ResponsableEmail,ParticipantsEmails
+"IA pour la Santé","Diagnostic automatisé par intelligence artificielle",2024-01-01,2024-12-31,EN_COURS,5000000,ESMT,45,Intelligence Artificielle,admin@esmt.sn,candidat@esmt.sn;manager@esmt.sn
+"Réseau 5G Sénégal","Optimisation de la couverture réseau 5G",2024-02-15,2025-02-15,EN_COURS,8000000,ESMT,10,Télécommunications,manager@esmt.sn,candidat@esmt.sn
+"Smart Grid Energy","Gestion intelligente des réseaux électriques",2024-03-01,2025-03-01,SUSPENDU,12000000,Polytech,0,Énergie,admin@esmt.sn,manager@esmt.sn
+"Télémédecine Rurale","Plateforme de consultation médicale à distance",2023-06-01,2024-06-01,TERMINE,3000000,ESMT,100,Santé,candidat@esmt.sn,admin@esmt.sn
+"Machine Learning Agricole","Prédiction des rendements agricoles par ML",2025-01-15,2026-01-15,EN_COURS,7000000,ESMT,20,Intelligence Artificielle,manager@esmt.sn,candidat@esmt.sn;admin@esmt.sn
+"IoT et Domotique","Systèmes connectés pour habitat intelligent",2023-09-01,2024-09-01,TERMINE,4500000,Polytech,100,Télécommunications,admin@esmt.sn,candidat@esmt.sn
+"Énergie Solaire Sahel","Optimisation des panneaux solaires au Sahel",2024-07-01,2025-12-31,EN_COURS,15000000,ESMT,35,Énergie,candidat@esmt.sn,manager@esmt.sn

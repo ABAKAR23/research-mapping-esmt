@@ -23,12 +23,8 @@ async function loadProjects(userId = null) {
     if (tableBody) tableBody.innerHTML = '';
     
     try {
-        // Load projects based on user role
-        if (userId) {
-            allProjects = await API.getUserProjects(userId);
-        } else {
-            allProjects = await API.getAllProjects();
-        }
+        // Load projects visible to the current user (server-side role filtering)
+        allProjects = await API.getMesProjects();
         
         filteredProjects = [...allProjects];
         displayProjects();
