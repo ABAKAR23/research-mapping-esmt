@@ -4,7 +4,7 @@
  */
 
 const API = {
-    baseUrl: '/research-mapping-esmt/api/javaee',
+    baseUrl: '/api',
     
     /**
      * Generic fetch wrapper with error handling
@@ -42,11 +42,19 @@ const API = {
     // ==================== PROJECT ENDPOINTS ====================
     
     /**
-     * Get all projects
+     * Get all projects (Admin/Gestionnaire only)
      * GET /projects
      */
     getAllProjects: async function() {
         return await this.request('/projects');
+    },
+    
+    /**
+     * Get current user's projects (all roles)
+     * GET /projects/mes-projets
+     */
+    getMesProjects: async function() {
+        return await this.request('/projects/mes-projets');
     },
     
     /**
@@ -117,50 +125,50 @@ const API = {
     
     /**
      * Get projects by domain
-     * GET /statistics/by-domain
+     * GET /statistics/projets-par-domaine
      */
     getProjectsByDomain: async function() {
-        return await this.request('/statistics/by-domain');
+        return await this.request('/statistics/projets-par-domaine');
     },
     
     /**
      * Get projects by status
-     * GET /statistics/by-status
+     * GET /statistics/projets-par-statut
      */
     getProjectsByStatus: async function() {
-        return await this.request('/statistics/by-status');
+        return await this.request('/statistics/projets-par-statut');
     },
     
     /**
      * Get temporal evolution (projects by year)
-     * GET /statistics/temporal-evolution
+     * GET /statistics/evolution-temporelle
      */
     getTemporalEvolution: async function() {
-        return await this.request('/statistics/temporal-evolution');
+        return await this.request('/statistics/evolution-temporelle');
     },
     
     /**
      * Get projects by participant
-     * GET /statistics/by-participant
+     * GET /statistics/projets-par-participant
      */
     getProjectsByParticipant: async function() {
-        return await this.request('/statistics/by-participant');
+        return await this.request('/statistics/projets-par-participant');
     },
     
     /**
      * Get total project count
-     * GET /statistics/total
+     * GET /statistics/total-projets
      */
     getTotalProjects: async function() {
-        return await this.request('/statistics/total');
+        return await this.request('/statistics/total-projets');
     },
     
     /**
      * Get budget by domain
-     * GET /statistics/budget-by-domain
+     * GET /statistics/budget-par-domaine
      */
     getBudgetByDomain: async function() {
-        return await this.request('/statistics/budget-by-domain');
+        return await this.request('/statistics/budget-par-domaine');
     },
     
     // ==================== USER ENDPOINTS ====================

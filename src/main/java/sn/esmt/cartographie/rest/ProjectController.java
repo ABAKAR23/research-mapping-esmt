@@ -25,9 +25,16 @@ public class ProjectController {
     private ProjetService projetService;
 
     @GetMapping
-    @Operation(summary = "Obtenir tous les projets visibles par l'utilisateur connecté")
+    @Operation(summary = "Obtenir tous les projets (admin et gestionnaire uniquement)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTIONNAIRE')")
+    public ResponseEntity<List<ProjetDTO>> getAllProjects() {
+        return ResponseEntity.ok(projetService.getAllProjets());
+    }
+
+    @GetMapping("/mes-projets")
+    @Operation(summary = "Obtenir les projets de l'utilisateur connecté")
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTIONNAIRE', 'CANDIDAT')")
-    public ResponseEntity<List<ProjetDTO>> getAllProjects(Authentication authentication) {
+    public ResponseEntity<List<ProjetDTO>> getMesProjects(Authentication authentication) {
         String email = authentication.getName();
         return ResponseEntity.ok(projetService.getMyProjects(email));
     }
