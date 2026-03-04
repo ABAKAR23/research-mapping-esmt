@@ -6,10 +6,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Espace Candidat - ESMT Research Mapping</title>
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* Votre CSS existant reste identique */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; }
 
@@ -138,6 +139,7 @@
             font-size: 12px;
             font-weight: 600;
         }
+        /* NOTE: les classes générées en JS sont: status-en_cours, status-termine, status-suspendu, status-planifie */
         .status-en_cours { background: #28a745; color: white; }
         .status-termine { background: #007bff; color: white; }
         .status-suspendu { background: #dc3545; color: white; }
@@ -281,6 +283,13 @@
             .project-info { grid-template-columns: 1fr; }
         }
     </style>
+
+    <!-- Contexte pour que fetch/redirect fonctionne même si l'app n'est pas à la racine -->
+    <script>
+        window.APP_CONTEXT_PATH = '<%= request.getContextPath() %>' || '';
+        // Debug minimal pour prouver que le script s'exécute
+        console.log('[dashboard-candidat] contextPath=', window.APP_CONTEXT_PATH);
+    </script>
 </head>
 
 <body>
@@ -298,7 +307,7 @@
                     <div style="font-weight: 600;" id="displayNameNav">Candidat</div>
                 </div>
             </div>
-            <button class="btn-logout" id="logoutBtn">Se Déconnecter</button>
+            <button class="btn-logout" id="logoutBtn" type="button">Se Déconnecter</button>
         </div>
     </div>
 
@@ -383,7 +392,7 @@
                     <p>Consultez et gérez vos projets de recherche</p>
                 </div>
 
-                <button class="btn btn-primary" onclick="app.showPage('nouveau-projet')">
+                <button class="btn btn-primary" type="button" onclick="app.showPage('nouveau-projet')">
                     ➕ Ajouter un Nouveau Projet
                 </button>
 
@@ -449,6 +458,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Statut *</label>
+                                <!-- FIX: on garde PLANIFIE (sans accent) pour matcher le backend -->
                                 <select id="projectStatus" required>
                                     <option value="EN_COURS">En Cours</option>
                                     <option value="PLANIFIE">Planifié</option>
@@ -491,7 +501,7 @@
                         <p><strong>📧 Email :</strong> <span id="profileEmail">candidat@esmt.sn</span></p>
                         <p><strong>👤 Nom Complet :</strong> <span id="profileNom">Candidat</span></p>
                         <p><strong>🏢 Institution :</strong> <span id="profileInstitution">ESMT</span></p>
-                        <p><strong>📅 Inscrit depuis :</strong> <span id="profileDate">2026-02-16</span></p>
+                        <p><strong>📅 Inscrit depuis :</strong> <span id="profileDate">-</span></p>
                     </div>
                 </div>
 
@@ -520,7 +530,7 @@
 
                 <div class="card">
                     <h2>Sécurité</h2>
-                    <button class="btn btn-primary" id="changePasswordBtn">🔐 Changer mon mot de passe</button>
+                    <button class="btn btn-primary" type="button" id="changePasswordBtn">🔐 Changer mon mot de passe</button>
                 </div>
 
                 <div class="card">
@@ -574,6 +584,13 @@
     </div>
 
     <script>
+        // Helpers URL
+        function ctx(path) {
+            const base = window.APP_CONTEXT_PATH || '';
+            if (!path) return base;
+            return base + (path.startsWith('/') ? path : ('/' + path));
+        }
+
         // Constantes
         const DOMAINES_MAP = {
             "IA": 1,
@@ -603,44 +620,36 @@
             mesProjets: [],
             editingId: null,
 
-            // Initialisation
             init: function() {
-                console.log('Initialisation de l\'application...');
+                console.log('[dashboard-candidat] init()');
                 this.attachEvents();
                 this.loadUserFromSession();
+                // On charge les projets après avoir attaché les events
                 this.loadProjectsData();
             },
 
-            // Attachement des événements
             attachEvents: function() {
-                console.log('Attachement des événements...');
+                console.log('[dashboard-candidat] attachEvents()');
 
-                // Navigation - méthode 1: par dataset
+                // Navigation
                 document.querySelectorAll('.nav-link').forEach(link => {
                     link.addEventListener('click', (e) => {
                         e.preventDefault();
                         const pageId = link.getAttribute('data-page');
-                        console.log('Navigation vers:', pageId);
                         this.showPage(pageId);
                     });
                 });
 
-                // Navigation - méthode 2: par onclick (alternative)
-                window.showPage = (pageId) => {
-                    this.showPage(pageId);
-                };
+                // Fallback global si tu utilises encore onclick quelque part
+                window.showPage = (pageId) => this.showPage(pageId);
 
-                // Déconnexion - correction: on utilise l'ID correct
+                // Déconnexion
                 const logoutBtn = document.getElementById('logoutBtn');
                 if (logoutBtn) {
-                    console.log('Bouton déconnexion trouvé');
                     logoutBtn.addEventListener('click', (e) => {
                         e.preventDefault();
-                        console.log('Clic sur déconnexion');
                         this.logout();
                     });
-                } else {
-                    console.error('Bouton déconnexion non trouvé!');
                 }
 
                 // Formulaire projet
@@ -650,21 +659,16 @@
                         e.preventDefault();
                         this.saveProject();
                     });
+
+                    projectForm.addEventListener('reset', () => {
+                        setTimeout(() => this.resetForm(), 0);
+                    });
                 }
 
                 // Annuler édition
                 const cancelEditBtn = document.getElementById('cancelEditBtn');
                 if (cancelEditBtn) {
-                    cancelEditBtn.addEventListener('click', () => {
-                        this.cancelEdit();
-                    });
-                }
-
-                // Reset formulaire
-                if (projectForm) {
-                    projectForm.addEventListener('reset', () => {
-                        setTimeout(() => this.resetForm(), 0);
-                    });
+                    cancelEditBtn.addEventListener('click', () => this.cancelEdit());
                 }
 
                 // Formulaire profil
@@ -679,130 +683,81 @@
                 // Changement mot de passe
                 const changePasswordBtn = document.getElementById('changePasswordBtn');
                 if (changePasswordBtn) {
-                    changePasswordBtn.addEventListener('click', () => {
-                        this.changePassword();
-                    });
+                    changePasswordBtn.addEventListener('click', () => this.changePassword());
                 }
 
-                // Validation des dates
+                // Validation dates
                 const startDate = document.getElementById('projectStartDate');
                 const endDate = document.getElementById('projectEndDate');
-
-                if (startDate) {
-                    startDate.addEventListener('change', () => this.validateDates());
-                }
-                if (endDate) {
-                    endDate.addEventListener('change', () => this.validateDates());
-                }
+                if (startDate) startDate.addEventListener('change', () => this.validateDates());
+                if (endDate) endDate.addEventListener('change', () => this.validateDates());
             },
 
-            // Navigation
             showPage: function(pageId) {
-                console.log('Affichage de la page:', pageId);
-
                 // Cacher toutes les pages
-                document.querySelectorAll('.page').forEach(page => {
-                    page.classList.remove('active');
-                });
-
+                document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
                 // Désactiver tous les liens
-                document.querySelectorAll('.nav-link').forEach(link => {
-                    link.classList.remove('active');
-                });
+                document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
 
                 // Afficher la page demandée
                 const page = document.getElementById(pageId);
-                if (page) {
-                    page.classList.add('active');
-                    console.log('Page trouvée et activée');
-                } else {
-                    console.error('Page non trouvée:', pageId);
-                }
+                if (page) page.classList.add('active');
 
                 // Activer le lien correspondant
                 const navLink = document.querySelector(`[data-page="${pageId}"]`);
-                if (navLink) {
-                    navLink.classList.add('active');
-                }
+                if (navLink) navLink.classList.add('active');
 
-                // Reset du formulaire si on quitte la page nouveau-projet
+                // Reset du formulaire si on quitte nouveau-projet
                 if (pageId !== 'nouveau-projet') {
                     this.cancelEdit();
                 }
             },
 
-            // Déconnexion - version corrigée et améliorée
             logout: function() {
-                console.log('Tentative de déconnexion...');
-
-                if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                    console.log('Déconnexion annulée par l\'utilisateur');
-                    return;
-                }
+                if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) return;
 
                 const token = localStorage.getItem('token');
-                console.log('Token présent:', !!token);
 
-                // Afficher le chargement
+                // UI loading
                 this.showLoading(true);
 
-                // Appel API de déconnexion
-                fetch('/api/auth/logout', {
+                // Appel API logout (backend: /api/auth/logout)
+                fetch(ctx('/api/auth/logout'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         ...(token && { 'Authorization': 'Bearer ' + token })
                     }
                 })
-                .then(response => {
-                    console.log('Réponse déconnexion:', response.status);
-                    // Nettoyer le stockage local dans tous les cas
+                .finally(() => {
+                    // Nettoyage local dans tous les cas
                     this.clearUserSession();
-
-                    // Rediriger vers la page de connexion
-                    console.log('Redirection vers /login?logout');
-                    window.location.href = '/login?logout';
-                })
-                .catch(error => {
-                    console.error('Erreur lors de la déconnexion:', error);
-                    // Même en cas d'erreur, on nettoie et on redirige
-                    this.clearUserSession();
-                    window.location.href = '/login?logout';
+                    // Redirect vers login (avec contextPath)
+                    window.location.href = ctx('/login?logout');
                 });
             },
 
-            // Nettoyer la session utilisateur
             clearUserSession: function() {
-                console.log('Nettoyage de la session...');
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 sessionStorage.clear();
             },
 
-            // Chargement utilisateur
             loadUserFromSession: function() {
-                console.log('Chargement utilisateur...');
                 const userStr = localStorage.getItem('user');
                 if (!userStr) {
-                    console.log('Aucun utilisateur trouvé');
+                    console.warn('[dashboard-candidat] Aucun user dans localStorage');
                     return;
                 }
-
                 try {
                     const user = JSON.parse(userStr);
-                    console.log('Utilisateur chargé:', user.email);
-
-                    // Mettre à jour l'affichage
                     this.updateUserDisplay(user);
-
                 } catch (e) {
-                    console.error('Erreur parsing user:', e);
+                    console.error('[dashboard-candidat] user JSON invalide:', e);
                 }
             },
 
-            // Mettre à jour l'affichage utilisateur
             updateUserDisplay: function(user) {
-                // Éléments du navbar
                 const userEmail = document.getElementById('userEmail');
                 const userNom = document.getElementById('userNom');
                 const userInstitution = document.getElementById('userInstitution');
@@ -817,7 +772,6 @@
                 if (displayNameNav) displayNameNav.textContent = displayName;
                 if (userAvatarNav) userAvatarNav.textContent = displayName.charAt(0).toUpperCase();
 
-                // Éléments du profil
                 const profileEmail = document.getElementById('profileEmail');
                 const profileNom = document.getElementById('profileNom');
                 const profileInstitution = document.getElementById('profileInstitution');
@@ -826,7 +780,6 @@
                 if (profileNom) profileNom.textContent = user.nom || 'Candidat';
                 if (profileInstitution) profileInstitution.textContent = user.institution || 'ESMT';
 
-                // Formulaire d'édition
                 const editNom = document.getElementById('editNom');
                 const editInstitution = document.getElementById('editInstitution');
 
@@ -834,15 +787,11 @@
                 if (editInstitution) editInstitution.value = user.institution || '';
             },
 
-            // Afficher/masquer chargement
             showLoading: function(show, elementId = 'dashboardLoading') {
                 const loader = document.getElementById(elementId);
-                if (loader) {
-                    loader.style.display = show ? 'block' : 'none';
-                }
+                if (loader) loader.style.display = show ? 'block' : 'none';
             },
 
-            // Validation des dates
             validateDates: function() {
                 const startInput = document.getElementById('projectStartDate');
                 const endInput = document.getElementById('projectEndDate');
@@ -858,7 +807,6 @@
                     this.showFormAlert('La date de début ne peut pas être dans le passé', 'error');
                     return false;
                 }
-
                 if (end <= start) {
                     this.showFormAlert('La date de fin doit être postérieure à la date de début', 'error');
                     return false;
@@ -868,37 +816,34 @@
                 return true;
             },
 
-            // Afficher alerte formulaire
             showFormAlert: function(message, type = 'info') {
                 const alert = document.getElementById('formAlert');
-                if (alert) {
-                    alert.textContent = message;
-                    alert.className = `alert alert-${type}`;
-                    alert.style.display = 'block';
-                }
+                if (!alert) return;
+                alert.textContent = message;
+                alert.className = `alert alert-${type}`;
+                alert.style.display = 'block';
             },
 
             hideFormAlert: function() {
                 const alert = document.getElementById('formAlert');
-                if (alert) {
-                    alert.style.display = 'none';
-                }
+                if (alert) alert.style.display = 'none';
             },
 
-            // Sauvegarder projet
             saveProject: function() {
                 if (!this.validateDates()) return;
 
                 const token = localStorage.getItem('token');
                 if (!token) {
                     alert('Session expirée, veuillez vous reconnecter');
-                    window.location.href = '/login';
+                    window.location.href = ctx('/login');
                     return;
                 }
 
+                const domainKey = document.getElementById('projectDomain').value;
+
                 const projectData = {
                     titreProjet: document.getElementById('projectTitle').value,
-                    domaineId: DOMAINES_MAP[document.getElementById('projectDomain').value] || 1,
+                    domaineId: DOMAINES_MAP[domainKey] || 1,
                     description: document.getElementById('projectDescription').value,
                     dateDebut: document.getElementById('projectStartDate').value,
                     dateFin: document.getElementById('projectEndDate').value,
@@ -909,7 +854,7 @@
                 };
 
                 const editingId = document.getElementById('editingProjectId').value;
-                const url = editingId ? `/api/projects/${editingId}` : '/api/projects';
+                const url = editingId ? ctx(`/api/projects/${editingId}`) : ctx('/api/projects');
                 const method = editingId ? 'PUT' : 'POST';
 
                 const submitBtn = document.getElementById('submitBtn');
@@ -919,7 +864,7 @@
                 }
 
                 fetch(url, {
-                    method: method,
+                    method,
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + token
@@ -936,15 +881,13 @@
                     return response.json();
                 })
                 .then(() => {
-                    const message = editingId ? 'modifié' : 'créé';
-                    alert(`✅ Projet ${message} avec succès!`);
-
+                    alert(`✅ Projet ${editingId ? 'modifié' : 'créé'} avec succès!`);
                     this.cancelEdit();
                     this.showPage('mes-projets');
                     this.loadProjectsData();
                 })
                 .catch(error => {
-                    console.error('Error:', error);
+                    console.error('Error saveProject:', error);
                     this.showFormAlert(error.message || 'Erreur lors de la sauvegarde', 'error');
                 })
                 .finally(() => {
@@ -955,39 +898,37 @@
                 });
             },
 
-            // Charger les projets
             loadProjectsData: function() {
                 const token = localStorage.getItem('token');
                 if (!token) {
-                    window.location.href = '/login';
+                    console.warn('[dashboard-candidat] Pas de token, pas de chargement projets');
+                    // On ne redirect pas automatiquement ici: ça donnait l'impression que "rien ne marche"
                     return;
                 }
 
                 this.showLoading(true, 'projectsListLoading');
                 this.showLoading(true, 'dashboardLoading');
 
-                fetch('/api/projects/mes-projets', {
+                fetch(ctx('/api/projects/mes-projets'), {
                     headers: { 'Authorization': 'Bearer ' + token }
                 })
                 .then(response => {
                     if (!response.ok) {
-                        if (response.status === 401 || response.status === 403) {
-                            throw new Error('Non autorisé');
-                        }
+                        if (response.status === 401 || response.status === 403) throw new Error('Non autorisé');
                         throw new Error('Erreur chargement');
                     }
                     return response.json();
                 })
                 .then(data => {
                     this.mesProjets = (data || []).map(p => ({
-                        id: p.projectId,
-                        titre: p.titreProjet,
-                        domaine: p.domaineNom || 'Non spécifié',
+                        id: p.projectId ?? p.id, // compat
+                        titre: p.titreProjet ?? p.titre,
+                        domaine: p.domaineNom || p.domaine?.nom || 'Non spécifié',
                         description: p.description,
-                        dateDebut: p.dateDebut ? p.dateDebut.substring(0, 10) : '',
-                        dateFin: p.dateFin ? p.dateFin.substring(0, 10) : '',
+                        dateDebut: p.dateDebut ? String(p.dateDebut).substring(0, 10) : '',
+                        dateFin: p.dateFin ? String(p.dateFin).substring(0, 10) : '',
                         budget: p.budgetEstime || 0,
-                        statut: p.statutProjet,
+                        statut: p.statutProjet || p.statut,
                         avancement: p.niveauAvancement || 0,
                         institution: p.institution
                     }));
@@ -1001,7 +942,7 @@
                     console.error("Erreur chargement projets", e);
                     if (e.message === 'Non autorisé') {
                         this.clearUserSession();
-                        window.location.href = '/login';
+                        window.location.href = ctx('/login');
                     } else {
                         alert('Erreur lors du chargement des projets');
                     }
@@ -1012,7 +953,6 @@
                 });
             },
 
-            // Mettre à jour les stats
             updateStats: function() {
                 const enCours = this.mesProjets.filter(p => p.statut === 'EN_COURS').length;
                 const termine = this.mesProjets.filter(p => p.statut === 'TERMINE').length;
@@ -1035,7 +975,6 @@
                 }
             },
 
-            // Afficher les projets
             displayProjects: function() {
                 const container = document.getElementById('projectsList');
                 if (!container) return;
@@ -1057,19 +996,13 @@
                 });
             },
 
-            // Afficher projets récents
             displayRecentProjects: function() {
                 const container = document.getElementById('recentProjects');
                 if (!container) return;
 
                 const recents = this.mesProjets.slice(0, 3);
-
                 if (recents.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <p>Aucun projet récent</p>
-                        </div>
-                    `;
+                    container.innerHTML = `<div class="empty-state"><p>Aucun projet récent</p></div>`;
                     return;
                 }
 
@@ -1080,19 +1013,14 @@
                 });
             },
 
-            // Créer une carte projet
             createProjectCard: function(projet, isRecent = false) {
                 const template = document.getElementById('projectTemplate');
-                if (!template) {
-                    console.error('Template non trouvé');
-                    return null;
-                }
+                if (!template) return null;
 
                 const card = template.cloneNode(true);
                 card.id = '';
                 card.classList.remove('template-hidden');
 
-                // Remplir les données
                 const titleEl = card.querySelector('.project-title');
                 const domainEl = card.querySelector('.project-domain');
                 const statusBadge = card.querySelector('.status-badge');
@@ -1107,42 +1035,36 @@
                 if (domainEl) domainEl.textContent = projet.domaine || '';
 
                 if (statusBadge) {
-                    statusBadge.textContent = STATUTS_LABELS[projet.statut] || projet.statut;
+                    const statut = projet.statut || '';
+                    statusBadge.textContent = STATUTS_LABELS[statut] || statut;
                     statusBadge.className = 'status-badge';
-                    statusBadge.classList.add(`status-${(projet.statut || '').toLowerCase()}`);
+                    statusBadge.classList.add(`status-${statut.toLowerCase()}`);
                 }
 
                 if (descEl) descEl.textContent = projet.description || '';
                 if (startDateEl) startDateEl.textContent = this.formatDate(projet.dateDebut);
                 if (endDateEl) endDateEl.textContent = this.formatDate(projet.dateFin);
                 if (budgetEl) budgetEl.textContent = this.formatBudget(projet.budget);
-                if (progressValueEl) progressValueEl.textContent = projet.avancement + '%';
+                if (progressValueEl) progressValueEl.textContent = (projet.avancement ?? 0) + '%';
 
-                if (progressFill) {
-                    progressFill.style.width = projet.avancement + '%';
-                }
+                if (progressFill) progressFill.style.width = (projet.avancement ?? 0) + '%';
 
-                // Ajouter les boutons d'action
                 if (!isRecent) {
                     const actions = card.querySelector('.project-actions');
                     if (actions) {
                         actions.innerHTML = '';
 
                         const editBtn = document.createElement('button');
+                        editBtn.type = 'button';
                         editBtn.className = 'btn btn-primary btn-small';
                         editBtn.innerHTML = '✏️ Modifier';
-                        editBtn.onclick = (e) => {
-                            e.preventDefault();
-                            this.editProject(projet.id);
-                        };
+                        editBtn.addEventListener('click', () => this.editProject(projet.id));
 
                         const deleteBtn = document.createElement('button');
+                        deleteBtn.type = 'button';
                         deleteBtn.className = 'btn btn-danger btn-small';
                         deleteBtn.innerHTML = '🗑️ Supprimer';
-                        deleteBtn.onclick = (e) => {
-                            e.preventDefault();
-                            this.deleteProject(projet.id);
-                        };
+                        deleteBtn.addEventListener('click', () => this.deleteProject(projet.id));
 
                         actions.appendChild(editBtn);
                         actions.appendChild(deleteBtn);
@@ -1155,7 +1077,6 @@
                 return card;
             },
 
-            // Éditer projet
             editProject: function(id) {
                 const projet = this.mesProjets.find(p => p.id === id);
                 if (!projet) return;
@@ -1164,7 +1085,6 @@
                 const editingInput = document.getElementById('editingProjectId');
                 if (editingInput) editingInput.value = id;
 
-                // Remplir le formulaire
                 const titleInput = document.getElementById('projectTitle');
                 const descInput = document.getElementById('projectDescription');
                 const startInput = document.getElementById('projectStartDate');
@@ -1183,7 +1103,6 @@
                 if (institutionInput) institutionInput.value = projet.institution || '';
                 if (progressInput) progressInput.value = projet.avancement || 0;
 
-                // Modifier l'interface
                 const formTitle = document.getElementById('formTitle');
                 const formSubtitle = document.getElementById('formSubtitle');
                 const submitBtn = document.getElementById('submitBtn');
@@ -1197,17 +1116,14 @@
                 this.showPage('nouveau-projet');
             },
 
-            // Annuler édition
             cancelEdit: function() {
                 this.editingId = null;
                 const editingInput = document.getElementById('editingProjectId');
                 if (editingInput) editingInput.value = '';
 
-                // Reset formulaire
                 const form = document.getElementById('projectForm');
                 if (form) form.reset();
 
-                // Restaurer interface
                 const formTitle = document.getElementById('formTitle');
                 const formSubtitle = document.getElementById('formSubtitle');
                 const submitBtn = document.getElementById('submitBtn');
@@ -1221,33 +1137,27 @@
                 this.hideFormAlert();
             },
 
-            // Reset formulaire
             resetForm: function() {
-                if (!this.editingId) {
-                    this.hideFormAlert();
-                }
+                if (!this.editingId) this.hideFormAlert();
             },
 
-            // Supprimer projet
             deleteProject: function(id) {
                 if (!confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) return;
 
                 const token = localStorage.getItem('token');
                 if (!token) {
                     alert('Session expirée, veuillez vous reconnecter');
-                    window.location.href = '/login';
+                    window.location.href = ctx('/login');
                     return;
                 }
 
-                fetch('/api/projects/' + id, {
+                fetch(ctx('/api/projects/' + id), {
                     method: 'DELETE',
                     headers: { 'Authorization': 'Bearer ' + token }
                 })
                 .then(response => {
                     if (!response.ok) {
-                        if (response.status === 401 || response.status === 403) {
-                            throw new Error('Non autorisé');
-                        }
+                        if (response.status === 401 || response.status === 403) throw new Error('Non autorisé');
                         throw new Error('Erreur lors de la suppression');
                     }
 
@@ -1260,17 +1170,16 @@
                     alert('✅ Projet supprimé avec succès!');
                 })
                 .catch(error => {
-                    console.error('Erreur:', error);
+                    console.error('Erreur deleteProject:', error);
                     alert(error.message || 'Erreur lors de la suppression du projet');
                 });
             },
 
-            // Mettre à jour profil
             updateProfile: function() {
                 const token = localStorage.getItem('token');
                 if (!token) {
                     alert('Session expirée, veuillez vous reconnecter');
-                    window.location.href = '/login';
+                    window.location.href = ctx('/login');
                     return;
                 }
 
@@ -1282,7 +1191,7 @@
                     institution: editInstitution ? editInstitution.value : ''
                 };
 
-                fetch('/api/users/me', {
+                fetch(ctx('/api/users/me'), {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1292,9 +1201,7 @@
                 })
                 .then(response => {
                     if (!response.ok) {
-                        if (response.status === 401 || response.status === 403) {
-                            throw new Error('Non autorisé');
-                        }
+                        if (response.status === 401 || response.status === 403) throw new Error('Non autorisé');
                         throw new Error('Erreur lors de la mise à jour');
                     }
                     return response.json();
@@ -1302,7 +1209,6 @@
                 .then(data => {
                     alert('✅ Profil mis à jour avec succès!');
 
-                    // Mettre à jour l'affichage
                     const user = {
                         email: data.email,
                         nom: data.nom,
@@ -1310,17 +1216,14 @@
                     };
 
                     this.updateUserDisplay(user);
-
-                    // Mettre à jour localStorage
                     localStorage.setItem('user', JSON.stringify(user));
                 })
                 .catch(error => {
-                    console.error('Erreur:', error);
+                    console.error('Erreur updateProfile:', error);
                     alert(error.message || 'Erreur lors de la mise à jour du profil');
                 });
             },
 
-            // Changer mot de passe
             changePassword: function() {
                 const newPassword = prompt('Entrez votre nouveau mot de passe (minimum 6 caractères):');
                 if (!newPassword) return;
@@ -1339,11 +1242,11 @@
                 const token = localStorage.getItem('token');
                 if (!token) {
                     alert('Session expirée, veuillez vous reconnecter');
-                    window.location.href = '/login';
+                    window.location.href = ctx('/login');
                     return;
                 }
 
-                fetch('/api/users/change-password', {
+                fetch(ctx('/api/users/change-password'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1352,26 +1255,27 @@
                     body: JSON.stringify({ password: newPassword })
                 })
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erreur lors du changement de mot de passe');
-                    }
+                    if (!response.ok) throw new Error('Erreur lors du changement de mot de passe');
                     alert('✅ Mot de passe modifié avec succès!');
                 })
                 .catch(error => {
-                    console.error('Erreur:', error);
+                    console.error('Erreur changePassword:', error);
                     alert(error.message || 'Erreur lors du changement de mot de passe');
                 });
             },
 
-            // Initialiser les graphiques
             initCharts: function() {
-                // Détruire les anciens graphiques
+                // FIX: si Chart.js n'est pas chargé, ne pas casser toute l'app
+                if (typeof Chart === 'undefined') {
+                    console.warn('[dashboard-candidat] Chart.js non chargé, graphiques désactivés');
+                    return;
+                }
+
                 Object.values(this.charts).forEach(chart => {
                     if (chart) chart.destroy();
                 });
                 this.charts = {};
 
-                // Graphique des statuts
                 const ctxStatus = document.getElementById('statusChart');
                 if (ctxStatus) {
                     const stats = {
@@ -1419,7 +1323,6 @@
                     }
                 }
 
-                // Graphique d'avancement
                 const ctxProgress = document.getElementById('progressChart');
                 if (ctxProgress && this.mesProjets.length > 0) {
                     const projetsAvecTitre = this.mesProjets.map(p => ({
@@ -1442,24 +1345,16 @@
                             indexAxis: 'y',
                             responsive: true,
                             maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false }
-                            },
+                            plugins: { legend: { display: false } },
                             scales: {
-                                x: {
-                                    max: 100,
-                                    grid: { display: false }
-                                },
-                                y: {
-                                    grid: { display: false }
-                                }
+                                x: { max: 100, grid: { display: false } },
+                                y: { grid: { display: false } }
                             }
                         }
                     });
                 }
             },
 
-            // Formatage date
             formatDate: function(dateStr) {
                 if (!dateStr) return 'Non définie';
                 try {
@@ -1474,26 +1369,22 @@
                 }
             },
 
-            // Formatage budget
             formatBudget: function(budget) {
                 if (!budget) return '0 F';
-                if (budget >= 1000000) {
-                    return (budget / 1000000).toFixed(1) + 'M F';
-                }
+                if (budget >= 1000000) return (budget / 1000000).toFixed(1) + 'M F';
                 return budget.toLocaleString() + ' F';
             }
         };
 
-        // Initialisation au chargement du DOM
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM chargé, initialisation...');
-            app.init();
+            try {
+                console.log('[dashboard-candidat] DOMContentLoaded');
+                app.init();
+            } catch (e) {
+                console.error('[dashboard-candidat] Erreur init:', e);
+                alert("Erreur JS: " + (e && e.message ? e.message : e));
+            }
         });
-
-        // Fallback pour les anciens navigateurs
-        window.onload = function() {
-            console.log('Page complètement chargée');
-        };
     </script>
 </body>
 

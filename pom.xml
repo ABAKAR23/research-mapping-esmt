@@ -47,10 +47,7 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
-        </dependency>
+        <!-- oauth2-resource-server retiré : conflit SecurityFilterChain avec oauth2-client -->
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -152,10 +149,11 @@
             <version>3.1.3</version>
         </dependency>
 
+        <!-- tomcat-embed-jasper : doit être disponible pour mvn spring-boot:run (Tomcat embarqué) -->
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-jasper</artifactId>
-            <scope>provided</scope>
+            <!-- NE PAS mettre 'provided' ici : cela empêche le rendu JSP avec le Tomcat embarqué -->
         </dependency>
 
         <dependency>
